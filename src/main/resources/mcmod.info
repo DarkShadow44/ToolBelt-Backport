@@ -1,15 +1,15 @@
 [
 {
-  "modid": "toolbelt",
-  "name": "Tool Belt",
-  "description": "Adds a (baubles-aware) belt that you can use to hold multiple tools at once.",
-  "version": "${version}",
-  "mcversion": "${mcversion}",
-  "url": "https://github.com/gigaherz/ToolBelt",
+  "modid": "${modId}",
+  "name": "${modName}",
+  "description": "A belt to carry your tools in. 1.7.10 backport of gigaherz's Tool Belt.",
+  "version": "${modVersion}",
+  "mcversion": "${minecraftVersion}",
+  "url": "https://github.com/DarkShadow44/ToolBelt-Backport",
   "updateUrl": "",
-  "authorList": ["gigaherz"],
-  "credits": "",
-  "logoFile": "",
+  "authorList": ["gigaherz", "DarkShadow44"],
+  "credits": "Original mod by gigaherz (David Quintana)",
+  "logoFile": "logo.png",
   "screenshots": [],
   "dependencies": []
 }
