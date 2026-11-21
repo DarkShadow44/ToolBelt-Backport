@@ -17,6 +17,7 @@ import org.lwjgl.opengl.GL11;
 
 import com.google.common.collect.Lists;
 
+import cpw.mods.fml.common.Loader;
 import cpw.mods.fml.common.eventhandler.SubscribeEvent;
 import gigaherz.toolbelt.BeltFinder;
 import gigaherz.toolbelt.Config;
@@ -338,7 +339,7 @@ public class GuiRadialMenu extends GuiScreen {
                 double fixedX = scaledX * radius / distance;
                 double fixedY = scaledY * radius / distance;
 
-                Mouse.setCursorPosition((int) (mc.displayWidth / 2 + fixedX), (int) (mc.displayHeight / 2 + fixedY));
+                setCursorPosition((int) (mc.displayWidth / 2 + fixedX), (int) (mc.displayHeight / 2 + fixedY));
             }
         }
 
@@ -423,7 +424,18 @@ public class GuiRadialMenu extends GuiScreen {
     }
 
     private void setMousePosition(double x, double y) {
-        Mouse.setCursorPosition((int) (x * mc.displayWidth / width), (int) (y * mc.displayHeight / height));
+        setCursorPosition((int) (x * mc.displayWidth / width), (int) (y * mc.displayHeight / height));
+    }
+
+    private static final boolean LWJGL3IFY = Loader.isModLoaded("lwjgl3ify");
+
+    /**
+     * Mouse.setCursorPosition with lwjgl2 semantics (y = 0 at the bottom). lwjgl3ify flips y in Mouse.getY() but not
+     * in setCursorPosition, which goes straight to SDL with y = 0 at the top.
+     */
+    private void setCursorPosition(int x, int y) {
+        if (LWJGL3IFY) y = mc.displayHeight - 1 - y;
+        Mouse.setCursorPosition(x, y);
     }
 
     private static final float PRECISION = 5;
