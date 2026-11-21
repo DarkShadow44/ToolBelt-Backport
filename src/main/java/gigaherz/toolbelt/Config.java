@@ -184,7 +184,7 @@ public class Config {
     }
 
     private static final Pattern itemRegex = Pattern
-        .compile("^(?<item>([a-zA-Z-0-9_]+:)?[a-zA-Z-0-9_]+)(?:@((?<meta>[0-9]+)|(?<any>any)))?$");
+        .compile("^(?<item>([a-zA-Z-0-9_]+:)?[a-zA-Z-0-9_.]+)(?:@((?<meta>[0-9]+)|(?<any>any)))?$");
 
     private static ItemStack parseItemStack(String itemString) {
         Matcher matcher = itemRegex.matcher(itemString);
