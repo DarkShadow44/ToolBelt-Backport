@@ -58,7 +58,7 @@ public class ExtensionSlotBelt implements IExtensionContainer, IExtendedEntityPr
         return (ExtensionSlotBelt) player.getExtendedProperties(CAPABILITY_ID.toString());
     }
 
-    private static class AttachHandlers {
+    public static class AttachHandlers {
 
         @SubscribeEvent
         public void attachCapabilities(EntityEvent.EntityConstructing event) {
@@ -78,9 +78,9 @@ public class ExtensionSlotBelt implements IExtensionContainer, IExtendedEntityPr
         }
     }
 
-    private static class EventHandlers {
+    public static class EventHandlers {
 
-        static class Disabled {
+        public static class Disabled {
 
             @SubscribeEvent
             public void entityTick(TickEvent.PlayerTickEvent event) {

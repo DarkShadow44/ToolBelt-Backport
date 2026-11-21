@@ -63,7 +63,7 @@ public class ClientProxy implements ISideProxy {
     @Override
     public void init() {
         ClientRegistry.registerKeyBinding(
-            keyOpenToolMenu = new KeyBinding("key.toolbelt.open", Keyboard.KEY_R, "key.toolbelt.category"));
+            keyOpenToolMenu = new KeyBinding("key.toolbelt.open", Keyboard.KEY_NONE, "key.toolbelt.category"));
         // keyOpenToolMenu.
 
         ClientRegistry.registerKeyBinding(
@@ -74,7 +74,7 @@ public class ClientProxy implements ISideProxy {
 
         if (Config.customBeltSlotEnabled) {
             ClientRegistry.registerKeyBinding(
-                keyOpenBeltSlot = new KeyBinding("key.toolbelt.slot", Keyboard.KEY_V, "key.toolbelt.category"));
+                keyOpenBeltSlot = new KeyBinding("key.toolbelt.slot", Keyboard.KEY_NONE, "key.toolbelt.category"));
         }
 
         MinecraftForge.EVENT_BUS.register(new LayerToolBelt());

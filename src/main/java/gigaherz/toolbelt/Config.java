@@ -68,7 +68,7 @@ public class Config {
         beltItemScaleProperty.comment = "Changes the scale of items on the belt.";
 
         Property releaseToSwapProperty = config.get("input", "releaseToSwap", false);
-        releaseToSwapProperty.comment = "If set to TRUE, releasing the menu key (R) will activate the swap. Requires a click otherwise (default).";
+        releaseToSwapProperty.comment = "If set to TRUE, releasing the menu key will activate the swap. Requires a click otherwise (default).";
 
         Property clipMouseToCircleProperty = config.get("input", "clipMouseToCircle", false);
         clipMouseToCircleProperty.comment = "If set to TRUE, the radial menu will try to prevent the mouse from leaving the outer circle.";
