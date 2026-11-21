@@ -26,6 +26,7 @@ import baubles.api.expanded.IBaubleExpanded;
 import cpw.mods.fml.common.Optional;
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
+import gigaherz.toolbelt.Config;
 import gigaherz.toolbelt.ToolBelt;
 import gigaherz.toolbelt.common.GuiHandler;
 import gigaherz.toolbelt.customslots.ExtensionSlotItemHandler;
@@ -37,6 +38,8 @@ import gigaherz.toolbelt.slot.ExtensionSlotBelt;
 @Optional.InterfaceList({ @Optional.Interface(modid = "Baubles", iface = "baubles.api.IBauble"),
     @Optional.Interface(modid = "Baubles|Expanded", iface = "baubles.api.expanded.IBaubleExpanded") })
 public class ItemToolBelt extends Item implements IBauble, IBaubleExpanded, IExtensionSlotItem {
+
+    public static final int MAX_SLOTS = 36;
 
     public static final ImmutableSet<ResourceLocation> BELT_SLOT_LIST = ImmutableSet.of(ExtensionSlotBelt.BELT);
 
@@ -180,7 +183,7 @@ public class ItemToolBelt extends Item implements IBauble, IBaubleExpanded, IExt
 
         NBTTagCompound nbt = stack.getTagCompound();
         if (nbt != null) {
-            size = MathHelper.clamp_int(nbt.getInteger("Size"), 2, 9);
+            size = MathHelper.clamp_int(nbt.getInteger("Size"), 2, MAX_SLOTS);
         }
         return size;
     }
@@ -201,17 +204,17 @@ public class ItemToolBelt extends Item implements IBauble, IBaubleExpanded, IExt
     public static int getUpgradeXP(ItemStack stack) {
         int slots = getSlotsCount(stack);
 
-        if (slots >= 9) return -1;
+        if (slots >= Config.maxSlots) return -1;
 
         if (slots < 2) return 1;
 
-        return xpCost[slots - 2];
+        return xpCost[Math.min(slots - 2, xpCost.length - 1)];
     }
 
     public static ItemStack upgrade(ItemStack stack) {
         int slots = getSlotsCount(stack);
 
-        if (slots >= 9) return stack.copy();
+        if (slots >= Config.maxSlots) return stack.copy();
 
         stack = stack.copy();
         setSlotsCount(stack, slots + 1);
@@ -219,7 +222,7 @@ public class ItemToolBelt extends Item implements IBauble, IBaubleExpanded, IExt
     }
 
     public ItemStack of(int upgradeLevel) {
-        if (upgradeLevel < 0 || upgradeLevel >= 9) return null;
+        if (upgradeLevel < 0 || upgradeLevel + 2 > MAX_SLOTS) return null;
 
         ItemStack stack = new ItemStack(this);
         setSlotsCount(stack, upgradeLevel + 2);

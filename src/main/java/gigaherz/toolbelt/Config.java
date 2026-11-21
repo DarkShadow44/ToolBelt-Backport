@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.MathHelper;
 import net.minecraftforge.common.config.ConfigCategory;
 import net.minecraftforge.common.config.Configuration;
 import net.minecraftforge.common.config.Property;
@@ -45,6 +46,7 @@ public class Config {
     public static boolean minecraftHasNoCircles = false;
 
     public static boolean disableAnvilUpgrading = false;
+    public static int maxSlots = 9;
 
     public static CustomBeltSlotMode customBeltSlotMode = CustomBeltSlotMode.ON;
     public static boolean customBeltSlotEnabled = true;
@@ -85,6 +87,9 @@ public class Config {
         Property disableAnvilUpgradingProperty = config.get("behaviour", "disableAnvilUpgrading", false);
         disableAnvilUpgradingProperty.comment = "If set to TRUE, the internal anvil upgrade will not work, and alternative methods for upgrades will have to be provided externally.";
 
+        Property maxSlotsProperty = config.get("behaviour", "maxSlots", 9, null, 9, ItemToolBelt.MAX_SLOTS);
+        maxSlotsProperty.comment = "The maximum number of slots a belt can be upgraded to in the anvil.";
+
         Property customBeltSlotModeProperty = config
             .get("slot", "customBeltSlotMode", CustomBeltSlotMode.ON.getName(), null, CustomBeltSlotMode.names());
         customBeltSlotModeProperty.requiresMcRestart();
@@ -109,6 +114,7 @@ public class Config {
         minecraftHasNoCircles = minecraftHasNoCirclesProperty.getBoolean();
 
         disableAnvilUpgrading = disableAnvilUpgradingProperty.getBoolean();
+        maxSlots = MathHelper.clamp_int(maxSlotsProperty.getInt(), 9, ItemToolBelt.MAX_SLOTS);
 
         allowAllNonStackableItems = allowAllNonStackableItemsProperty.getBoolean();
 
@@ -128,7 +134,8 @@ public class Config {
             || !allowClickOutsideBoundsProperty.wasRead()
             || !displayEmptySlotsProperty.wasRead()
             || !minecraftHasNoCirclesProperty.wasRead()
-            || disableAnvilUpgradingProperty.wasRead()) {
+            || !disableAnvilUpgradingProperty.wasRead()
+            || !maxSlotsProperty.wasRead()) {
             config.save();
         }
     }
@@ -161,6 +168,11 @@ public class Config {
             .getBoolean();
         disableAnvilUpgrading = behaviour.get("disableAnvilUpgrading")
             .getBoolean();
+        maxSlots = MathHelper.clamp_int(
+            behaviour.get("maxSlots")
+                .getInt(),
+            9,
+            ItemToolBelt.MAX_SLOTS);
     }
 
     @SubscribeEvent

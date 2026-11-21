@@ -28,7 +28,7 @@ public class ToolBeltInventory implements IItemHandlerModifiable {
     // Ensure that the serialization is always compatible, even if it were to change upstream
     @Override
     public int getSlots() {
-        return MathHelper.clamp_int(getTag().getInteger("Size"), 2, 9);
+        return MathHelper.clamp_int(getTag().getInteger("Size"), 2, ItemToolBelt.MAX_SLOTS);
     }
 
     @Override

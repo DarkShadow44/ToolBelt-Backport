@@ -214,8 +214,11 @@ public class GuiRadialMenu extends GuiScreen {
         if (closing && openAnimation <= 0) doneClosing = true;
 
         float animProgress = MathHelper.clamp_float(openAnimation, 0, 1);
-        float radiusIn = Math.max(0.1f, 30 * animProgress);
-        float radiusOut = radiusIn * 2;
+        // Grow the ring so items keep ~18px of arc each, but stay on screen
+        float maxRadiusIn = Math.min(width, height) / 2.0f - 38;
+        float baseRadiusIn = Math.max(30, Math.min(numItems * 18 / (2 * (float) Math.PI) - 15, maxRadiusIn));
+        float radiusIn = Math.max(0.1f, baseRadiusIn * animProgress);
+        float radiusOut = radiusIn + 30 * animProgress;
         float itemRadius = (radiusIn + radiusOut) * 0.5f;
         float animTop = (1 - animProgress) * height / 2.0f;
 
@@ -333,7 +336,7 @@ public class GuiRadialMenu extends GuiScreen {
             double scaledY = Mouse.getY() - (mc.displayHeight / 2.0f);
 
             double distance = Math.sqrt(scaledX * scaledX + scaledY * scaledY);
-            double radius = 60.0 * (mc.displayWidth / width);
+            double radius = (baseRadiusIn + 30) * (mc.displayWidth / width);
 
             if (distance > radius) {
                 double fixedX = scaledX * radius / distance;

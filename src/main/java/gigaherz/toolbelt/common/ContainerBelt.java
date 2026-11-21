@@ -13,6 +13,7 @@ import gigaherz.toolbelt.belt.ToolBeltInventory;
 public class ContainerBelt extends Container {
 
     public final int beltSlots;
+    public final int beltRows;
     private final int blockedSlot;
 
     public ContainerBelt(IInventory playerInventory, int blockedSlot, ItemStack heldItem) {
@@ -20,28 +21,35 @@ public class ContainerBelt extends Container {
 
         this.blockedSlot = blockedSlot;
         beltSlots = beltInventory.getSlots();
-        int xoff = ((9 - beltSlots) * 18) / 2;
+        beltRows = (beltSlots + 8) / 9;
         for (int k = 0; k < beltSlots; ++k) {
-            this.addSlotToContainer(new SlotBelt(playerInventory, blockedSlot, k, 8 + xoff + k * 18, 20));
+            int row = k / 9;
+            int xoff = ((9 - getRowSlots(row)) * 18) / 2;
+            this.addSlotToContainer(
+                new SlotBelt(playerInventory, blockedSlot, k, 8 + xoff + (k % 9) * 18, 20 + row * 18));
         }
 
-        bindPlayerInventory(playerInventory, blockedSlot);
+        bindPlayerInventory(playerInventory, blockedSlot, (beltRows - 1) * 18);
     }
 
-    private void bindPlayerInventory(IInventory playerInventory, int blockedSlot) {
+    public int getRowSlots(int row) {
+        return Math.min(9, beltSlots - row * 9);
+    }
+
+    private void bindPlayerInventory(IInventory playerInventory, int blockedSlot, int yoff) {
         for (int l = 0; l < 3; ++l) {
             for (int j1 = 0; j1 < 9; ++j1) {
                 int index = j1 + l * 9 + 9;
                 this.addSlotToContainer(
-                    blockedSlot == index ? new SlotLocked(playerInventory, index, 8 + j1 * 18, l * 18 + 51)
-                        : new Slot(playerInventory, index, 8 + j1 * 18, l * 18 + 51));
+                    blockedSlot == index ? new SlotLocked(playerInventory, index, 8 + j1 * 18, l * 18 + 51 + yoff)
+                        : new Slot(playerInventory, index, 8 + j1 * 18, l * 18 + 51 + yoff));
             }
         }
 
         for (int i1 = 0; i1 < 9; ++i1) {
             this.addSlotToContainer(
-                blockedSlot == i1 ? new SlotLocked(playerInventory, i1, 8 + i1 * 18, 109)
-                    : new Slot(playerInventory, i1, 8 + i1 * 18, 109));
+                blockedSlot == i1 ? new SlotLocked(playerInventory, i1, 8 + i1 * 18, 109 + yoff)
+                    : new Slot(playerInventory, i1, 8 + i1 * 18, 109 + yoff));
         }
     }
 
