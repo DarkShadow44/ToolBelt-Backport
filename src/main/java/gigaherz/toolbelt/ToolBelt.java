@@ -1,49 +1,48 @@
 package gigaherz.toolbelt;
 
-import gigaherz.common.ItemRegistered;
+import gigaherz.toolbelt.belt.BeltDyeRecipe;
 import gigaherz.toolbelt.belt.ItemToolBelt;
+import gigaherz.toolbelt.common.BeltEvents;
 import gigaherz.toolbelt.common.GuiHandler;
-import gigaherz.toolbelt.customslots.CapabilityExtensionSlotItem;
 import gigaherz.toolbelt.network.BeltContentsChange;
 import gigaherz.toolbelt.network.OpenBeltSlotInventory;
 import gigaherz.toolbelt.network.SwapItems;
 import gigaherz.toolbelt.network.SyncBeltSlotContents;
 import gigaherz.toolbelt.slot.ExtensionSlotBelt;
-import net.minecraft.block.Block;
 import net.minecraft.creativetab.CreativeTabs;
-import net.minecraft.entity.Entity;
-import net.minecraft.init.Blocks;
-import net.minecraft.inventory.EntityEquipmentSlot;
+import net.minecraft.init.Items;
 import net.minecraft.item.Item;
-import net.minecraft.item.ItemBlock;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ResourceLocation;
+import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.AnvilUpdateEvent;
-import net.minecraftforge.event.RegistryEvent;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.common.Mod.EventHandler;
-import net.minecraftforge.fml.common.SidedProxy;
-import net.minecraftforge.fml.common.event.FMLInitializationEvent;
-import net.minecraftforge.fml.common.event.FMLPostInitializationEvent;
-import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
-import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
-import net.minecraftforge.fml.common.network.NetworkRegistry;
-import net.minecraftforge.fml.common.network.simpleimpl.SimpleNetworkWrapper;
-import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.oredict.RecipeSorter;
+import cpw.mods.fml.common.Loader;
+import cpw.mods.fml.common.Mod;
+import cpw.mods.fml.common.Mod.EventHandler;
+import cpw.mods.fml.common.SidedProxy;
+import cpw.mods.fml.common.event.FMLInitializationEvent;
+import cpw.mods.fml.common.event.FMLPostInitializationEvent;
+import cpw.mods.fml.common.event.FMLPreInitializationEvent;
+import cpw.mods.fml.common.eventhandler.SubscribeEvent;
+import cpw.mods.fml.common.network.NetworkRegistry;
+import cpw.mods.fml.common.network.simpleimpl.SimpleNetworkWrapper;
+import cpw.mods.fml.common.registry.GameRegistry;
+import cpw.mods.fml.relauncher.Side;
 import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 
-@Mod.EventBusSubscriber
 @Mod(modid = ToolBelt.MODID,
+        name = "ToolBelt Backport",
         version = ToolBelt.VERSION,
-        acceptedMinecraftVersions = "[1.12.0,1.13.0)",
-        dependencies = "after:baubles;after:jei@[4.6,)",
+        acceptedMinecraftVersions = "[1.7.10]",
+        dependencies = "after:Baubles;after:Baubles|Expanded",
         guiFactory = "gigaherz.toolbelt.client.config.ConfigGuiFactory")
 public class ToolBelt
 {
     public static final String MODID = "toolbelt";
-    public static final String VERSION = "@VERSION@";
+    public static final String VERSION = Tags.VERSION;
     public static final String CHANNEL = MODID;
 
     public static ItemToolBelt belt;
@@ -61,18 +60,10 @@ public class ToolBelt
 
     public static SimpleNetworkWrapper channel;
 
-    @SubscribeEvent
-    public static void registerBlocks(RegistryEvent.Register<Block> event)
+    public static void registerItems()
     {
-    }
-
-    @SubscribeEvent
-    public static void registerItems(RegistryEvent.Register<Item> event)
-    {
-        event.getRegistry().registerAll(
-                belt = new ItemToolBelt("belt"),
-                pouch = new ItemRegistered("pouch").setCreativeTab(CreativeTabs.TOOLS)
-        );
+        GameRegistry.registerItem(belt = new ItemToolBelt("belt"), "belt");
+        GameRegistry.registerItem(pouch = new Item().setUnlocalizedName(MODID + ".pouch").setTextureName(MODID + ":pouch").setCreativeTab(CreativeTabs.tabTools), "pouch");
     }
 
     @EventHandler
@@ -92,8 +83,16 @@ public class ToolBelt
         File configurationFile = event.getSuggestedConfigurationFile();
         Config.loadConfig(configurationFile);
 
-        CapabilityExtensionSlotItem.register();
+        registerItems();
+
         ExtensionSlotBelt.register();
+
+        BeltFinderBeltSlot.initBaubles();
+        if (Loader.isModLoaded("Baubles"))
+            BeltFinderBaubles.initBaubles();
+
+        MinecraftForge.EVENT_BUS.register(this);
+        MinecraftForge.EVENT_BUS.register(new BeltEvents());
     }
 
     @EventHandler
@@ -103,6 +102,10 @@ public class ToolBelt
 
         NetworkRegistry.INSTANCE.registerGuiHandler(this, guiHandler = new GuiHandler());
 
+        GameRegistry.addShapedRecipe(new ItemStack(belt), "sls", "l l", "lil", 's', Items.string, 'l', Items.leather, 'i', Items.iron_ingot);
+        GameRegistry.addShapedRecipe(new ItemStack(pouch), "sgs", "l l", "sls", 's', Items.string, 'l', Items.leather, 'g', Items.gold_ingot);
+        RecipeSorter.register(MODID + ":belt_dyes", BeltDyeRecipe.class, RecipeSorter.Category.SHAPELESS, "after:minecraft:shapeless");
+        GameRegistry.addRecipe(new BeltDyeRecipe());
     }
 
     @EventHandler
@@ -112,16 +115,16 @@ public class ToolBelt
     }
 
     @SubscribeEvent
-    public static void anvilChange(AnvilUpdateEvent ev)
+    public void anvilChange(AnvilUpdateEvent ev)
     {
         if (Config.disableAnvilUpgrading)
             return;
 
-        ItemStack left = ev.getLeft();
-        ItemStack right = ev.getRight();
-        if (left.getCount() <= 0 || left.getItem() != belt)
+        ItemStack left = ev.left;
+        ItemStack right = ev.right;
+        if (left == null || left.getItem() != belt)
             return;
-        if (right.getCount() <= 0 || right.getItem() != pouch)
+        if (right == null || right.getItem() != pouch)
             return;
         int cost = ItemToolBelt.getUpgradeXP(left);
         if (cost < 0)
@@ -129,10 +132,10 @@ public class ToolBelt
             ev.setCanceled(true);
             return;
         }
-        ev.setCost(cost);
-        ev.setMaterialCost(1);
+        ev.cost = cost;
+        ev.materialCost = 1;
 
-        ev.setOutput(ItemToolBelt.upgrade(left));
+        ev.output = ItemToolBelt.upgrade(left);
     }
 
     public static ResourceLocation location(String path)

@@ -9,15 +9,12 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.ItemStack;
 import net.minecraft.world.WorldServer;
-import net.minecraftforge.common.capabilities.Capability;
-import net.minecraftforge.common.capabilities.CapabilityInject;
 
 import javax.annotation.Nullable;
 
 public class BeltFinderBeltSlot extends BeltFinder
 {
-    @CapabilityInject(ExtensionSlotBelt.class)
-    public static void initBaubles(Capability cap)
+    public static void initBaubles()
     {
         BeltFinder.instances.add(new BeltFinderBeltSlot());
     }
@@ -33,7 +30,7 @@ public class BeltFinderBeltSlot extends BeltFinder
         for (IExtensionSlot slot : beltSlot.getSlots())
         {
             ItemStack inSlot = slot.getContents();
-            if (inSlot.getCount() > 0)
+            if (inSlot != null)
             {
                 if (inSlot.getItem() instanceof ItemToolBelt)
                 {
@@ -71,10 +68,10 @@ public class BeltFinderBeltSlot extends BeltFinder
         public void syncToClients()
         {
             EntityLivingBase thePlayer = slot.getContainer().getOwner();
-            if (thePlayer.world.isRemote)
+            if (thePlayer.worldObj.isRemote)
                 return;
             BeltContentsChange message = new BeltContentsChange(thePlayer, BeltContentsChange.ContainingInventory.BELT_SLOT, 0, slot.getContents());
-            ((WorldServer) thePlayer.world).getEntityTracker().getTrackingPlayers(thePlayer).forEach((p) -> {
+            ((WorldServer) thePlayer.worldObj).getEntityTracker().getTrackingPlayers(thePlayer).forEach((p) -> {
                 if (p instanceof EntityPlayerMP)
                     ToolBelt.channel.sendTo(message, (EntityPlayerMP) p);
             });

@@ -1,6 +1,7 @@
 package gigaherz.toolbelt.common;
 
 import gigaherz.toolbelt.BeltFinder;
+import gigaherz.toolbelt.Config;
 import gigaherz.toolbelt.belt.ToolBeltInventory;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.InventoryPlayer;
@@ -8,17 +9,17 @@ import net.minecraft.inventory.Container;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
-import net.minecraftforge.items.CapabilityItemHandler;
-import net.minecraftforge.items.IItemHandler;
 
 public class ContainerBelt extends Container
 {
     public final int beltSlots;
+    private final int blockedSlot;
 
     public ContainerBelt(IInventory playerInventory, int blockedSlot, ItemStack heldItem)
     {
-        ToolBeltInventory beltInventory = (ToolBeltInventory) heldItem.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, null);
+        ToolBeltInventory beltInventory = new ToolBeltInventory(heldItem);
 
+        this.blockedSlot = blockedSlot;
         beltSlots = beltInventory.getSlots();
         int xoff = ((9 - beltSlots) * 18) / 2;
         for (int k = 0; k < beltSlots; ++k)
@@ -58,7 +59,7 @@ public class ContainerBelt extends Container
     public void onContainerClosed(EntityPlayer playerIn)
     {
         super.onContainerClosed(playerIn);
-        if (!playerIn.world.isRemote)
+        if (!playerIn.worldObj.isRemote)
             BeltFinder.sendSync(playerIn);
     }
 
@@ -69,10 +70,19 @@ public class ContainerBelt extends Container
     }
 
     @Override
+    public ItemStack slotClick(int slotId, int button, int mode, EntityPlayer player)
+    {
+        // Number keys would move the open belt out of its hotbar slot
+        if (mode == 2 && button == blockedSlot)
+            return null;
+        return super.slotClick(slotId, button, mode, player);
+    }
+
+    @Override
     public ItemStack transferStackInSlot(EntityPlayer playerIn, int index)
     {
-        ItemStack itemstack = ItemStack.EMPTY;
-        Slot slot = this.inventorySlots.get(index);
+        ItemStack itemstack = null;
+        Slot slot = (Slot) this.inventorySlots.get(index);
 
         if (slot != null && slot.getHasStack())
         {
@@ -83,17 +93,18 @@ public class ContainerBelt extends Container
             {
                 if (!this.mergeItemStack(itemstack1, beltSlots, this.inventorySlots.size(), true))
                 {
-                    return ItemStack.EMPTY;
+                    return null;
                 }
             }
-            else if (!this.mergeItemStack(itemstack1, 0, beltSlots, false))
+            // mergeItemStack doesn't check isItemValid in 1.7.10
+            else if (!Config.isItemStackAllowed(itemstack1) || !this.mergeItemStack(itemstack1, 0, beltSlots, false))
             {
-                return ItemStack.EMPTY;
+                return null;
             }
 
-            if (itemstack1.getCount() == 0)
+            if (itemstack1.stackSize == 0)
             {
-                slot.putStack(ItemStack.EMPTY);
+                slot.putStack(null);
             }
             else
             {

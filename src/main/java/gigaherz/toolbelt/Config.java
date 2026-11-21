@@ -5,16 +5,12 @@ import com.google.common.collect.Sets;
 import gigaherz.toolbelt.belt.ItemToolBelt;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.IStringSerializable;
-import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.common.config.ConfigCategory;
 import net.minecraftforge.common.config.Configuration;
 import net.minecraftforge.common.config.Property;
-import net.minecraftforge.fml.client.event.ConfigChangedEvent;
-import net.minecraftforge.fml.common.Loader;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
-import net.minecraftforge.fml.common.registry.ForgeRegistries;
+import cpw.mods.fml.client.event.ConfigChangedEvent;
+import cpw.mods.fml.common.Loader;
+import cpw.mods.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.oredict.OreDictionary;
 
 import java.io.File;
@@ -24,7 +20,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-@Mod.EventBusSubscriber
 public class Config
 {
     private static Configuration config;
@@ -36,6 +31,7 @@ public class Config
     private static final Set<String> whiteListString = Sets.newHashSet();
     private static final Set<ItemStack> blackList = Sets.newHashSet();
     private static final Set<ItemStack> whiteList = Sets.newHashSet();
+    private static boolean allowAllNonStackableItems = true;
 
     public static boolean showBeltOnPlayers = true;
     public static float beltItemScale = 0.5f;
@@ -44,6 +40,7 @@ public class Config
     public static boolean clipMouseToCircle = true;
     public static boolean allowClickOutsideBounds = true;
     public static boolean displayEmptySlots = false;
+    public static boolean minecraftHasNoCircles = false;
 
     public static boolean disableAnvilUpgrading = false;
 
@@ -55,36 +52,41 @@ public class Config
         config = new Configuration(configurationFile);
 
         Property bl = config.get("items", "blacklist", new String[0]);
-        bl.setComment("List of items to disallow from placing in the belt.");
+        bl.comment = "List of items to disallow from placing in the belt.";
 
         Property wl = config.get("items", "whitelist", new String[0]);
-        wl.setComment("List of items to force-allow placing in the belt. Takes precedence over blacklist.");
+        wl.comment = "List of items to force-allow placing in the belt. Takes precedence over blacklist.";
+
+        Property allowAllNonStackableItemsProperty = config.get("items", "allowAllNonStackableItems", true);
+        allowAllNonStackableItemsProperty.comment = "When set to false, stackable items will no longer be allowed by default.";
 
         Property showBeltOnPlayersProperty = config.get("display", "showBeltOnPlayers", true);
-        showBeltOnPlayersProperty.setComment("If set to FALSE, the belts and tools will NOT draw on players.");
+        showBeltOnPlayersProperty.comment = "If set to FALSE, the belts and tools will NOT draw on players.";
 
         Property beltItemScaleProperty = config.get("display", "beltItemScale", 0.5);
-        beltItemScaleProperty.setComment("Changes the scale of items on the belt.");
+        beltItemScaleProperty.comment = "Changes the scale of items on the belt.";
 
         Property releaseToSwapProperty = config.get("input", "releaseToSwap", false);
-        releaseToSwapProperty.setComment("If set to TRUE, releasing the menu key (R) will activate the swap. Requires a click otherwise (default).");
+        releaseToSwapProperty.comment = "If set to TRUE, releasing the menu key (R) will activate the swap. Requires a click otherwise (default).";
 
         Property clipMouseToCircleProperty = config.get("input", "clipMouseToCircle", false);
-        clipMouseToCircleProperty.setComment("If set to TRUE, the radial menu will try to prevent the mouse from leaving the outer circle.");
+        clipMouseToCircleProperty.comment = "If set to TRUE, the radial menu will try to prevent the mouse from leaving the outer circle.";
 
         Property allowClickOutsideBoundsProperty = config.get("input", "allowClickOutsideBounds", false);
-        allowClickOutsideBoundsProperty.setComment("If set to TRUE, the radial menu will allow clicking outside the outer circle to activate the items.");
+        allowClickOutsideBoundsProperty.comment = "If set to TRUE, the radial menu will allow clicking outside the outer circle to activate the items.";
 
         Property displayEmptySlotsProperty = config.get("input", "displayEmptySlots", false);
-        displayEmptySlotsProperty.setComment("If set to TRUE, the radial menu will always display all the slots, even when empty, and will allow choosing which empty slot to insert into.");
+        displayEmptySlotsProperty.comment = "If set to TRUE, the radial menu will always display all the slots, even when empty, and will allow choosing which empty slot to insert into.";
+
+        Property minecraftHasNoCirclesProperty = config.get("input", "minecraftHasNoCircles", false);
+        minecraftHasNoCirclesProperty.comment = "If set to TRUE, the radial menu will be drawn as a series of squares.";
 
         Property disableAnvilUpgradingProperty = config.get("behaviour", "disableAnvilUpgrading", false);
-        disableAnvilUpgradingProperty.setComment("If set to TRUE, the internal anvil upgrade will not work, and alternative methods for upgrades will have to be provided externally.");
+        disableAnvilUpgradingProperty.comment = "If set to TRUE, the internal anvil upgrade will not work, and alternative methods for upgrades will have to be provided externally.";
 
-        Property customBeltSlotModeProperty = config.get("slot", "customBeltSlotMode", CustomBeltSlotMode.ON.getName());
-        customBeltSlotModeProperty.setValidValues(CustomBeltSlotMode.names());
+        Property customBeltSlotModeProperty = config.get("slot", "customBeltSlotMode", CustomBeltSlotMode.ON.getName(), null, CustomBeltSlotMode.names());
         customBeltSlotModeProperty.requiresMcRestart();
-        customBeltSlotModeProperty.setComment("If AUTO, the belt slot will be disabled if Baubles is present. If OFF, the belt slot will be disabled permanently.");
+        customBeltSlotModeProperty.comment = "If AUTO, the belt slot will be disabled if Baubles is present. If OFF, the belt slot will be disabled permanently.";
 
         display = config.getCategory("display");
         display.setComment("Options for customizing the display of tools on the player");
@@ -102,24 +104,29 @@ public class Config
         clipMouseToCircle = clipMouseToCircleProperty.getBoolean();
         allowClickOutsideBounds = allowClickOutsideBoundsProperty.getBoolean();
         displayEmptySlots = displayEmptySlotsProperty.getBoolean();
+        minecraftHasNoCircles = minecraftHasNoCirclesProperty.getBoolean();
 
         disableAnvilUpgrading = disableAnvilUpgradingProperty.getBoolean();
+
+        allowAllNonStackableItems = allowAllNonStackableItemsProperty.getBoolean();
 
         customBeltSlotMode = CustomBeltSlotMode.byName(customBeltSlotModeProperty.getString());
 
         customBeltSlotEnabled = customBeltSlotMode == CustomBeltSlotMode.ON ||
-                (customBeltSlotMode == CustomBeltSlotMode.AUTO && !Loader.isModLoaded("baubles"));
+                (customBeltSlotMode == CustomBeltSlotMode.AUTO && !Loader.isModLoaded("Baubles"));
 
         blackListString.addAll(Arrays.asList(bl.getStringList()));
         whiteListString.addAll(Arrays.asList(wl.getStringList()));
         if (!bl.wasRead() ||
                 !wl.wasRead() ||
+                !allowAllNonStackableItemsProperty.wasRead() ||
                 !releaseToSwapProperty.wasRead() ||
                 !showBeltOnPlayersProperty.wasRead() ||
                 !beltItemScaleProperty.wasRead() ||
                 !clipMouseToCircleProperty.wasRead() ||
                 !allowClickOutsideBoundsProperty.wasRead() ||
                 !displayEmptySlotsProperty.wasRead() ||
+                !minecraftHasNoCirclesProperty.wasRead() ||
                 disableAnvilUpgradingProperty.wasRead())
         {
             config.save();
@@ -140,13 +147,14 @@ public class Config
         clipMouseToCircle = input.get("clipMouseToCircle").getBoolean();
         allowClickOutsideBounds = input.get("allowClickOutsideBounds").getBoolean();
         displayEmptySlots = input.get("displayEmptySlots").getBoolean();
+        minecraftHasNoCircles = input.get("minecraftHasNoCircles").getBoolean();
         disableAnvilUpgrading = behaviour.get("disableAnvilUpgrading").getBoolean();
     }
 
     @SubscribeEvent
-    public static void onConfigChange(ConfigChangedEvent.OnConfigChangedEvent event)
+    public void onConfigChange(ConfigChangedEvent.OnConfigChangedEvent event)
     {
-        if (ToolBelt.MODID.equals(event.getModID()))
+        if (ToolBelt.MODID.equals(event.modID))
         {
             if (config.hasChanged())
                 config.save();
@@ -163,14 +171,14 @@ public class Config
         if (!matcher.matches())
         {
             ToolBelt.logger.warn("Could not parse item " + itemString);
-            return ItemStack.EMPTY;
+            return null;
         }
 
-        Item item = ForgeRegistries.ITEMS.getValue(new ResourceLocation(matcher.group("item")));
+        Item item = (Item) Item.itemRegistry.getObject(matcher.group("item"));
         if (item == null)
         {
             ToolBelt.logger.warn("Could not parse item " + itemString);
-            return ItemStack.EMPTY;
+            return null;
         }
 
         String anyString = matcher.group("any");
@@ -184,7 +192,7 @@ public class Config
 
     public static boolean isItemStackAllowed(final ItemStack stack)
     {
-        if (stack.getCount() <= 0)
+        if (stack == null || stack.stackSize <= 0)
             return true;
 
         if (whiteList.stream().anyMatch((s) -> OreDictionary.itemMatches(s, stack, false)))
@@ -199,10 +207,10 @@ public class Config
         if (stack.getMaxStackSize() != 1)
             return false;
 
-        return true;
+        return allowAllNonStackableItems;
     }
 
-    public enum CustomBeltSlotMode implements IStringSerializable
+    public enum CustomBeltSlotMode
     {
         OFF("off"),
         AUTO("auto"),
@@ -215,7 +223,6 @@ public class Config
             this.name = name;
         }
 
-        @Override
         public String getName()
         {
             return name;

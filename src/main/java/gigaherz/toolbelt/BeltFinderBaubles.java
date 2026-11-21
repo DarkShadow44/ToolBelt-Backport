@@ -1,20 +1,16 @@
 package gigaherz.toolbelt;
 
 import baubles.api.BaublesApi;
-import baubles.api.cap.IBaublesItemHandler;
 import gigaherz.toolbelt.belt.ItemToolBelt;
-import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.inventory.IInventory;
 import net.minecraft.item.ItemStack;
-import net.minecraftforge.common.capabilities.Capability;
-import net.minecraftforge.common.capabilities.CapabilityInject;
 
 import javax.annotation.Nullable;
 
 public class BeltFinderBaubles extends BeltFinder
 {
-    @CapabilityInject(IBaublesItemHandler.class)
-    public static void initBaubles(Capability cap)
+    public static void initBaubles()
     {
         BeltFinder.instances.add(new BeltFinderBaubles());
     }
@@ -22,18 +18,20 @@ public class BeltFinderBaubles extends BeltFinder
     @Override
     public void setToBaubles(EntityPlayer player, int slot, ItemStack stack)
     {
-        IBaublesItemHandler baubles = BaublesApi.getBaublesHandler(player);
-        baubles.setStackInSlot(slot, stack);
+        IInventory baubles = BaublesApi.getBaubles(player);
+        baubles.setInventorySlotContents(slot, stack);
     }
 
     @Nullable
     public BeltGetter findStack(EntityPlayer player)
     {
-        IBaublesItemHandler baubles = BaublesApi.getBaublesHandler(player);
-        for (int i = 0; i < baubles.getSlots(); i++)
+        IInventory baubles = BaublesApi.getBaubles(player);
+        if (baubles == null)
+            return null;
+        for (int i = 0; i < baubles.getSizeInventory(); i++)
         {
             ItemStack inSlot = baubles.getStackInSlot(i);
-            if (inSlot.getCount() > 0)
+            if (inSlot != null)
             {
                 if (inSlot.getItem() instanceof ItemToolBelt)
                 {
@@ -59,22 +57,18 @@ public class BeltFinderBaubles extends BeltFinder
         @Override
         public ItemStack getBelt()
         {
-            IBaublesItemHandler baubles = BaublesApi.getBaublesHandler(thePlayer);
+            IInventory baubles = BaublesApi.getBaubles(thePlayer);
             return baubles.getStackInSlot(slotNumber);
         }
 
         @Override
         public void syncToClients()
         {
-            // No need! Baubles does its own sync.
-            /*if (thePlayer.world.isRemote)
+            // Baubles doesn't notice contents changing in place, setting the slot again makes it sync to everyone.
+            if (thePlayer.worldObj.isRemote)
                 return;
-            BeltContentsChange message = new BeltContentsChange(thePlayer, BAUBLES, slotNumber, getBelt());
-            ((WorldServer) thePlayer.world).getEntityTracker().getTrackingPlayers(thePlayer).forEach((p) -> {
-                if (p instanceof EntityPlayerMP)
-                    ToolBelt.channel.sendTo(message, (EntityPlayerMP) p);
-            });
-            */
+            IInventory baubles = BaublesApi.getBaubles(thePlayer);
+            baubles.setInventorySlotContents(slotNumber, baubles.getStackInSlot(slotNumber));
         }
     }
 }

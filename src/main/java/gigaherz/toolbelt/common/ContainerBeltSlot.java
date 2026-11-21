@@ -1,19 +1,20 @@
 package gigaherz.toolbelt.common;
 
 import gigaherz.toolbelt.BeltFinder;
-import gigaherz.toolbelt.ToolBelt;
+import gigaherz.toolbelt.belt.ItemToolBelt;
 import gigaherz.toolbelt.slot.ExtensionSlotBelt;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.inventory.*;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.ResourceLocation;
 import gigaherz.toolbelt.customslots.IExtensionSlot;
 import gigaherz.toolbelt.customslots.SlotExtension;
 
 public class ContainerBeltSlot extends ContainerPlayer
 {
-    public static final ResourceLocation BACKGROUND_ICON = ToolBelt.location("gui/empty_belt_slot_background");
+    // The 1.12 position overlaps the 1.7.10 crafting grid
+    public static final int SLOT_X = 80;
+    public static final int SLOT_Y = 62;
 
     private final SlotExtension slotBelt;
     private final IExtensionSlot extensionSlot;
@@ -22,19 +23,19 @@ public class ContainerBeltSlot extends ContainerPlayer
     {
         super(playerInventory, localWorld, playerIn);
 
-        ExtensionSlotBelt container = playerIn.getCapability(ExtensionSlotBelt.CAPABILITY, null);
+        ExtensionSlotBelt container = ExtensionSlotBelt.get(playerIn);
 
         extensionSlot = container.getBelt();
 
-        this.addSlotToContainer(slotBelt = new SlotExtension(extensionSlot, 77, 44));
-        slotBelt.setBackgroundName(BACKGROUND_ICON.toString());
+        this.addSlotToContainer(slotBelt = new SlotExtension(extensionSlot, SLOT_X, SLOT_Y));
+        slotBelt.setBackgroundIcon(ItemToolBelt.emptySlotIcon);
     }
 
     @Override
     public void onContainerClosed(EntityPlayer playerIn)
     {
         super.onContainerClosed(playerIn);
-        if (!playerIn.world.isRemote)
+        if (!playerIn.worldObj.isRemote)
             BeltFinder.sendSync(playerIn);
     }
 
@@ -47,11 +48,11 @@ public class ContainerBeltSlot extends ContainerPlayer
     @Override
     public ItemStack transferStackInSlot(EntityPlayer playerIn, int index)
     {
-        Slot slot = this.inventorySlots.get(index);
+        Slot slot = (Slot) this.inventorySlots.get(index);
 
         if (slot != null && slot.getHasStack())
         {
-            ItemStack remaining = ItemStack.EMPTY;
+            ItemStack remaining = null;
             ItemStack slotContents = slot.getStack();
             remaining = slotContents.copy();
 
@@ -59,17 +60,24 @@ public class ContainerBeltSlot extends ContainerPlayer
             {
                 if (!this.mergeItemStack(slotContents, 9, 45, false))
                 {
-                    return ItemStack.EMPTY;
+                    return null;
                 }
 
+                if (slotContents.stackSize == 0)
+                    slot.putStack(null);
                 return remaining;
             }
-            else if(slot.isItemValid(slotContents))
+            // mergeItemStack doesn't check isItemValid in 1.7.10
+            else if(slotBelt.isItemValid(slotContents))
             {
                 if (!this.mergeItemStack(slotContents, slotBelt.slotNumber,  slotBelt.slotNumber + 1, false))
                 {
-                    return ItemStack.EMPTY;
+                    return null;
                 }
+
+                if (slotContents.stackSize == 0)
+                    slot.putStack(null);
+                return remaining;
             }
         }
 

@@ -1,5 +1,6 @@
 package gigaherz.toolbelt;
 
+import com.google.common.collect.Lists;
 import gigaherz.toolbelt.belt.ItemToolBelt;
 import gigaherz.toolbelt.network.BeltContentsChange;
 import net.minecraft.entity.EntityLivingBase;
@@ -7,16 +8,16 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.NonNullList;
 import net.minecraft.world.WorldServer;
 
 import javax.annotation.Nullable;
+import java.util.List;
 
 import static gigaherz.toolbelt.network.BeltContentsChange.ContainingInventory.MAIN;
 
 public abstract class BeltFinder
 {
-    public static NonNullList<BeltFinder> instances = NonNullList.create();
+    public static List<BeltFinder> instances = Lists.newArrayList();
 
     @Nullable
     public abstract BeltGetter findStack(EntityPlayer player);

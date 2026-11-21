@@ -7,28 +7,21 @@ import gigaherz.toolbelt.ToolBelt;
 import gigaherz.toolbelt.network.SwapItems;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiScreen;
-import net.minecraft.client.renderer.BufferBuilder;
-import net.minecraft.client.renderer.GlStateManager;
+import gigaherz.toolbelt.belt.ToolBeltInventory;
+import gigaherz.toolbelt.itemhandler.IItemHandler;
 import net.minecraft.client.renderer.RenderHelper;
 import net.minecraft.client.renderer.Tessellator;
-import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.client.settings.GameSettings;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.MathHelper;
 import net.minecraftforge.client.event.RenderGameOverlayEvent;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.items.CapabilityItemHandler;
-import net.minecraftforge.items.IItemHandler;
+import cpw.mods.fml.common.eventhandler.SubscribeEvent;
 import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.GL11;
 
-import javax.vecmath.Vector4f;
 import java.util.List;
 
-@Mod.EventBusSubscriber(Side.CLIENT)
 public class GuiRadialMenu extends GuiScreen
 {
     private final BeltFinder.BeltGetter getter;
@@ -48,19 +41,22 @@ public class GuiRadialMenu extends GuiScreen
     {
         this.getter = getter;
         this.stackEquipped = getter.getBelt();
-        inventory = stackEquipped.getCount() > 0 ? stackEquipped.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, null) : null;
-        startAnimation = Minecraft.getMinecraft().world.getTotalWorldTime() + (double) Minecraft.getMinecraft().getRenderPartialTicks();
+        inventory = stackEquipped != null ? new ToolBeltInventory(stackEquipped) : null;
+        startAnimation = Minecraft.getMinecraft().theWorld.getTotalWorldTime();
     }
 
-    @SubscribeEvent
-    public static void overlayEvent(RenderGameOverlayEvent.Pre event)
+    public static class OverlayHandler
     {
-        if (event.getType() != RenderGameOverlayEvent.ElementType.CROSSHAIRS)
-            return;
-
-        if (Minecraft.getMinecraft().currentScreen instanceof GuiRadialMenu)
+        @SubscribeEvent
+        public void overlayEvent(RenderGameOverlayEvent.Pre event)
         {
-            event.setCanceled(true);
+            if (event.type != RenderGameOverlayEvent.ElementType.CROSSHAIRS)
+                return;
+
+            if (Minecraft.getMinecraft().currentScreen instanceof GuiRadialMenu)
+            {
+                event.setCanceled(true);
+            }
         }
     }
 
@@ -81,7 +77,7 @@ public class GuiRadialMenu extends GuiScreen
             return;
         }
 
-        ItemStack inHand = mc.player.getHeldItemMainhand();
+        ItemStack inHand = mc.thePlayer.getCurrentEquippedItem();
         if (!Config.isItemStackAllowed(inHand))
         {
             inventory = null;
@@ -89,7 +85,7 @@ public class GuiRadialMenu extends GuiScreen
         else
         {
             ItemStack stack = getter.getBelt();
-            if (stack.getCount() <= 0)
+            if (stack == null)
             {
                 inventory = null;
                 stackEquipped = null;
@@ -98,7 +94,7 @@ public class GuiRadialMenu extends GuiScreen
             else if (stackEquipped != stack)
             {
                 stackEquipped = stack;
-                inventory = stack.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, null);
+                inventory = new ToolBeltInventory(stack);
                 cachedStacks = null;
             }
         }
@@ -121,9 +117,10 @@ public class GuiRadialMenu extends GuiScreen
     }
 
     @Override
-    protected void mouseReleased(int mouseX, int mouseY, int state)
+    protected void mouseMovedOrUp(int mouseX, int mouseY, int state)
     {
-        super.mouseReleased(mouseX, mouseY, state);
+        // Only called on button release in 1.7.10
+        super.mouseMovedOrUp(mouseX, mouseY, state);
         processClick(true);
     }
 
@@ -135,7 +132,7 @@ public class GuiRadialMenu extends GuiScreen
         if (inventory == null)
             return;
 
-        ItemStack inHand = mc.player.getHeldItemMainhand();
+        ItemStack inHand = mc.thePlayer.getCurrentEquippedItem();
         if (!Config.isItemStackAllowed(inHand))
             return;
 
@@ -143,13 +140,13 @@ public class GuiRadialMenu extends GuiScreen
         for (int i = 0; i < inventory.getSlots(); i++)
         {
             ItemStack inSlot = inventory.getStackInSlot(i);
-            if (inSlot.getCount() > 0 || Config.displayEmptySlots)
+            if (inSlot != null || Config.displayEmptySlots)
                 items.add(i);
         }
 
         boolean hasAddButton = false;
         int numItems = items.size();
-        if (!Config.displayEmptySlots && (numItems < inventory.getSlots() && inHand.getCount() > 0))
+        if (!Config.displayEmptySlots && (numItems < inventory.getSlots() && inHand != null))
         {
             hasAddButton = true;
             numItems++;
@@ -165,7 +162,7 @@ public class GuiRadialMenu extends GuiScreen
             else
                 swapWith = items.get(selectedItem);
 
-            if (inHand.getCount() <= 0 && inventory.getStackInSlot(swapWith).getCount() <= 0)
+            if (inHand == null && inventory.getStackInSlot(swapWith) == null)
             {
                 if (triggeredByMouse)
                 {
@@ -175,7 +172,7 @@ public class GuiRadialMenu extends GuiScreen
             }
             else
             {
-                SwapItems.swapItem(swapWith, mc.player);
+                SwapItems.swapItem(swapWith, mc.thePlayer);
                 ToolBelt.channel.sendToServer(new SwapItems(swapWith));
             }
         }
@@ -187,7 +184,7 @@ public class GuiRadialMenu extends GuiScreen
     {
         closing = true;
         doneClosing = false;
-        startAnimation = Minecraft.getMinecraft().world.getTotalWorldTime() + (double) Minecraft.getMinecraft().getRenderPartialTicks();
+        startAnimation = Minecraft.getMinecraft().theWorld.getTotalWorldTime();
     }
 
     @Override
@@ -205,26 +202,26 @@ public class GuiRadialMenu extends GuiScreen
             for (int i = 0; i < inventory.getSlots(); i++)
             {
                 ItemStack inSlot = inventory.getStackInSlot(i);
-                if (inSlot.getCount() > 0 || Config.displayEmptySlots)
+                if (inSlot != null || Config.displayEmptySlots)
                     items.add(inSlot);
             }
             cachedStacks = items;
         }
 
-        ItemStack inHand = mc.player.getHeldItemMainhand();
+        ItemStack inHand = mc.thePlayer.getCurrentEquippedItem();
         if (!Config.isItemStackAllowed(inHand))
             return;
 
         boolean hasAddButton = false;
         int numItems = items.size();
-        if (!Config.displayEmptySlots && (numItems < inventory.getSlots() && inHand.getCount() > 0))
+        if (!Config.displayEmptySlots && (numItems < inventory.getSlots() && inHand != null))
         {
             hasAddButton = true;
             numItems++;
         }
         if (numItems <= 0)
         {
-            drawCenteredString(fontRenderer, I18n.format("text.toolbelt.empty"), width / 2, (height - fontRenderer.FONT_HEIGHT) / 2, 0xFFFFFFFF);
+            drawCenteredString(fontRendererObj, I18n.format("text.toolbelt.empty"), width / 2, (height - fontRendererObj.FONT_HEIGHT) / 2, 0xFFFFFFFF);
             if (closing)
                 doneClosing = true;
             return;
@@ -232,19 +229,19 @@ public class GuiRadialMenu extends GuiScreen
 
         if (hasAddButton)
         {
-            drawCenteredString(fontRenderer, I18n.format("text.toolbelt.insert"), width / 2, height / 2 + 45 - fontRenderer.FONT_HEIGHT / 2, 0xFFFFFFFF);
+            drawCenteredString(fontRendererObj, I18n.format("text.toolbelt.insert"), width / 2, height / 2 + 45 - fontRendererObj.FONT_HEIGHT / 2, 0xFFFFFFFF);
         }
 
         final float OPEN_ANIMATION_LENGTH = 2.5f;
 
         float openAnimation = closing
-                ? (float) (1 - ((Minecraft.getMinecraft().world.getTotalWorldTime() + partialTicks - startAnimation) / OPEN_ANIMATION_LENGTH))
-                : (float) ((Minecraft.getMinecraft().world.getTotalWorldTime() + partialTicks - startAnimation) / OPEN_ANIMATION_LENGTH);
+                ? (float) (1 - ((Minecraft.getMinecraft().theWorld.getTotalWorldTime() + partialTicks - startAnimation) / OPEN_ANIMATION_LENGTH))
+                : (float) ((Minecraft.getMinecraft().theWorld.getTotalWorldTime() + partialTicks - startAnimation) / OPEN_ANIMATION_LENGTH);
 
         if (closing && openAnimation <= 0)
             doneClosing = true;
 
-        float animProgress = MathHelper.clamp(openAnimation, 0, 1);
+        float animProgress = MathHelper.clamp_float(openAnimation, 0, 1);
         float radiusIn = Math.max(0.1f, 30 * animProgress);
         float radiusOut = radiusIn * 2;
         float itemRadius = (radiusIn + radiusOut) * 0.5f;
@@ -304,19 +301,20 @@ public class GuiRadialMenu extends GuiScreen
         float s0 = (((0 - 0.5f) / (float) numItems) + 0.25f) * 360;
         if (a < s0) a += 360;
 
-        GlStateManager.pushMatrix();
-        GlStateManager.disableAlpha();
-        GlStateManager.enableBlend();
-        GlStateManager.disableTexture2D();
-        GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
+        GL11.glPushMatrix();
+        GL11.glDisable(GL11.GL_ALPHA_TEST);
+        GL11.glEnable(GL11.GL_BLEND);
+        GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
+        GL11.glDisable(GL11.GL_TEXTURE_2D);
+        GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
 
-        GlStateManager.translate(0, animTop, 0);
+        GL11.glTranslatef(0, animTop, 0);
 
-        Tessellator tessellator = Tessellator.getInstance();
-        BufferBuilder buffer = tessellator.getBuffer();
-        buffer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_COLOR);
+        Tessellator tessellator = Tessellator.instance;
+        Tessellator buffer = tessellator;
+        buffer.startDrawingQuads();
         boolean hasMouseOver = false;
-        ItemStack itemMouseOver = ItemStack.EMPTY;
+        ItemStack itemMouseOver = null;
 
         if (!closing)
         {
@@ -338,15 +336,23 @@ public class GuiRadialMenu extends GuiScreen
         {
             float s = (((i - 0.5f) / (float) numItems) + 0.25f) * 360;
             float e = (((i + 0.5f) / (float) numItems) + 0.25f) * 360;
+            if (Config.minecraftHasNoCircles)
+            {
+                int color = selectedItem == i ? 255 : 0;
+                float size = selectedItem == i ? 12 : 10;
+                float angle = (float) Math.toRadians((s + e) * 0.5f);
+                drawSquare(buffer, x + itemRadius * (float) Math.cos(angle), y + itemRadius * (float) Math.sin(angle), zLevel, size, color, color, color, 64);
+            }
             if (selectedItem == i)
             {
-                drawPieArc(buffer, x, y, zLevel, radiusIn, radiusOut, s, e, 255, 255, 255, 64);
+                if (!Config.minecraftHasNoCircles)
+                    drawPieArc(buffer, x, y, zLevel, radiusIn, radiusOut, s, e, 255, 255, 255, 64);
 
                 if (i > 0 || !hasAddButton)
                 {
                     hasMouseOver = true;
 
-                    ItemStack inSlot = ItemStack.EMPTY;
+                    ItemStack inSlot = null;
                     if (hasAddButton)
                     {
                         if (i > 0)
@@ -362,7 +368,7 @@ public class GuiRadialMenu extends GuiScreen
                     itemMouseOver = inSlot;
                 }
             }
-            else
+            else if (!Config.minecraftHasNoCircles)
             {
                 drawPieArc(buffer, x, y, zLevel, radiusIn, radiusOut, s, e, 0, 0, 0, 64);
             }
@@ -386,20 +392,20 @@ public class GuiRadialMenu extends GuiScreen
         }
 
         tessellator.draw();
-        GlStateManager.enableTexture2D();
+        GL11.glEnable(GL11.GL_TEXTURE_2D);
 
-        boolean hasItemInHand = inHand.getCount() > 0;
+        boolean hasItemInHand = inHand != null;
         if (hasMouseOver)
         {
             if (hasItemInHand)
             {
-                if (itemMouseOver.getCount() > 0)
-                    drawCenteredString(fontRenderer, I18n.format("text.toolbelt.swap"), width / 2, (height - fontRenderer.FONT_HEIGHT) / 2, 0xFFFFFFFF);
+                if (itemMouseOver != null)
+                    drawCenteredString(fontRendererObj, I18n.format("text.toolbelt.swap"), width / 2, (height - fontRendererObj.FONT_HEIGHT) / 2, 0xFFFFFFFF);
                 else
-                    drawCenteredString(fontRenderer, I18n.format("text.toolbelt.insert"), width / 2, (height - fontRenderer.FONT_HEIGHT) / 2, 0xFFFFFFFF);
+                    drawCenteredString(fontRendererObj, I18n.format("text.toolbelt.insert"), width / 2, (height - fontRendererObj.FONT_HEIGHT) / 2, 0xFFFFFFFF);
             }
-            else if (itemMouseOver.getCount() > 0)
-                drawCenteredString(fontRenderer, I18n.format("text.toolbelt.extract"), width / 2, (height - fontRenderer.FONT_HEIGHT) / 2, 0xFFFFFFFF);
+            else if (itemMouseOver != null)
+                drawCenteredString(fontRendererObj, I18n.format("text.toolbelt.extract"), width / 2, (height - fontRendererObj.FONT_HEIGHT) / 2, 0xFFFFFFFF);
         }
 
         if (Config.displayEmptySlots)
@@ -407,12 +413,12 @@ public class GuiRadialMenu extends GuiScreen
             for (int i = 0; i < inventory.getSlots(); i++)
             {
                 ItemStack inSlot = inventory.getStackInSlot(i);
-                if (inSlot.getCount() <= 0)
+                if (inSlot == null)
                 {
                     float angle1 = ((i / (float) numItems) + 0.25f) * 2 * (float) Math.PI;
                     float posX = x + itemRadius * (float) Math.cos(angle1);
                     float posY = y + itemRadius * (float) Math.sin(angle1);
-                    drawCenteredString(fontRenderer, I18n.format("text.toolbelt.empty"), (int)posX, (int)posY - fontRenderer.FONT_HEIGHT / 2, 0x7FFFFFFF);
+                    drawCenteredString(fontRendererObj, I18n.format("text.toolbelt.empty"), (int)posX, (int)posY - fontRendererObj.FONT_HEIGHT / 2, 0x7FFFFFFF);
                 }
             }
         }
@@ -423,7 +429,7 @@ public class GuiRadialMenu extends GuiScreen
             float angle1 = ((i / (float) numItems) + 0.25f) * 2 * (float) Math.PI;
             float posX = x - 8 + itemRadius * (float) Math.cos(angle1);
             float posY = y - 8 + itemRadius * (float) Math.sin(angle1);
-            ItemStack inSlot = ItemStack.EMPTY;
+            ItemStack inSlot = null;
             if (hasAddButton)
             {
                 if (i > 0)
@@ -436,17 +442,17 @@ public class GuiRadialMenu extends GuiScreen
                 inSlot = items.get(i);
             }
 
-            if (inSlot.getCount() > 0)
+            if (inSlot != null)
             {
-                this.itemRender.renderItemAndEffectIntoGUI(inSlot, (int) posX, (int) posY);
-                this.itemRender.renderItemOverlayIntoGUI(this.fontRenderer, inSlot, (int) posX, (int) posY, "");
+                this.itemRender.renderItemAndEffectIntoGUI(this.fontRendererObj, mc.getTextureManager(), inSlot, (int) posX, (int) posY);
+                this.itemRender.renderItemOverlayIntoGUI(this.fontRendererObj, mc.getTextureManager(), inSlot, (int) posX, (int) posY, "");
             }
         }
         RenderHelper.disableStandardItemLighting();
 
-        GlStateManager.popMatrix();
+        GL11.glPopMatrix();
 
-        if (itemMouseOver.getCount() > 0)
+        if (itemMouseOver != null)
             renderToolTip(itemMouseOver, mouseX, mouseY);
     }
 
@@ -457,10 +463,21 @@ public class GuiRadialMenu extends GuiScreen
 
     private static final float PRECISION = 5;
 
-    private void drawPieArc(BufferBuilder buffer, float x, float y, float z, float radiusIn, float radiusOut, float startAngle, float endAngle, int r, int g, int b, int a)
+    private void drawSquare(Tessellator buffer, float x, float y, float z, float size, int r, int g, int b, int a)
+    {
+        buffer.setColorRGBA(r, g, b, a);
+        buffer.addVertex(x - size, y + size, z);
+        buffer.addVertex(x + size, y + size, z);
+        buffer.addVertex(x + size, y - size, z);
+        buffer.addVertex(x - size, y - size, z);
+    }
+
+    private void drawPieArc(Tessellator buffer, float x, float y, float z, float radiusIn, float radiusOut, float startAngle, float endAngle, int r, int g, int b, int a)
     {
         float angle = endAngle - startAngle;
-        int sections = Math.max(1, MathHelper.ceil(angle / PRECISION));
+        int sections = Math.max(1, MathHelper.ceiling_float_int(angle / PRECISION));
+
+        buffer.setColorRGBA(r, g, b, a);
 
         startAngle = (float) Math.toRadians(startAngle);
         endAngle = (float) Math.toRadians(endAngle);
@@ -480,10 +497,10 @@ public class GuiRadialMenu extends GuiScreen
             float pos2InX = x + radiusIn * (float) Math.cos(angle2);
             float pos2InY = y + radiusIn * (float) Math.sin(angle2);
 
-            buffer.pos(pos1OutX, pos1OutY, z).color(r, g, b, a).endVertex();
-            buffer.pos(pos1InX, pos1InY, z).color(r, g, b, a).endVertex();
-            buffer.pos(pos2InX, pos2InY, z).color(r, g, b, a).endVertex();
-            buffer.pos(pos2OutX, pos2OutY, z).color(r, g, b, a).endVertex();
+            buffer.addVertex(pos1OutX, pos1OutY, z);
+            buffer.addVertex(pos1InX, pos1InY, z);
+            buffer.addVertex(pos2InX, pos2InY, z);
+            buffer.addVertex(pos2OutX, pos2OutY, z);
         }
     }
 

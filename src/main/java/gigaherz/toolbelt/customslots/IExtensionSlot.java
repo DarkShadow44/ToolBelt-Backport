@@ -1,8 +1,6 @@
 package gigaherz.toolbelt.customslots;
 
 import com.google.common.collect.ImmutableSet;
-import net.minecraft.enchantment.EnchantmentHelper;
-import net.minecraft.init.Enchantments;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ResourceLocation;
 
@@ -34,7 +32,7 @@ public interface IExtensionSlot
      */
     default boolean canEquip(@Nonnull ItemStack stack)
     {
-        IExtensionSlotItem extItem = stack.getCapability(CapabilityExtensionSlotItem.INSTANCE, null);
+        IExtensionSlotItem extItem = CapabilityExtensionSlotItem.get(stack);
         return extItem != null
                 && IExtensionSlot.isAcceptableSlot(this, stack, extItem)
                 && extItem.canEquip(stack, this);
@@ -47,9 +45,8 @@ public interface IExtensionSlot
      */
     default boolean canUnequip(@Nonnull ItemStack stack)
     {
-        IExtensionSlotItem extItem = stack.getCapability(CapabilityExtensionSlotItem.INSTANCE, null);
-        return (extItem == null || extItem.canUnequip(stack, this))
-                && EnchantmentHelper.getEnchantmentLevel(Enchantments.BINDING_CURSE, stack) <= 0;
+        IExtensionSlotItem extItem = CapabilityExtensionSlotItem.get(stack);
+        return (extItem == null || extItem.canUnequip(stack, this));
     }
 
     static boolean isAcceptableSlot(@Nonnull IExtensionSlot slot, @Nonnull ItemStack stack, @Nonnull IExtensionSlotItem extItem)

@@ -2,7 +2,7 @@ package gigaherz.toolbelt.client.config;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiScreen;
-import net.minecraftforge.fml.client.IModGuiFactory;
+import cpw.mods.fml.client.IModGuiFactory;
 
 import java.util.Set;
 
@@ -14,20 +14,19 @@ public class ConfigGuiFactory implements IModGuiFactory
     }
 
     @Override
-    public boolean hasConfigGui()
+    public Class<? extends GuiScreen> mainConfigGuiClass()
     {
-        return true;
+        return ConfigGui.class;
     }
 
-    @Override
-    public GuiScreen createConfigGui(GuiScreen parentScreen)
-    {
-        return new ConfigGui(parentScreen);
-    }
-
-    @Deprecated
     @Override
     public Set<RuntimeOptionCategoryElement> runtimeGuiCategories()
+    {
+        return null;
+    }
+
+    @Override
+    public RuntimeOptionGuiHandler getHandlerFor(RuntimeOptionCategoryElement element)
     {
         return null;
     }

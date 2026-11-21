@@ -28,7 +28,7 @@ public class SlotExtension extends Slot
     @Override
     public boolean isItemValid(@Nonnull ItemStack stack)
     {
-        if (stack.isEmpty())
+        if (stack == null)
             return false;
 
         return slot.canEquip(stack);
@@ -74,12 +74,6 @@ public class SlotExtension extends Slot
         return 1;
     }
 
-    @Override
-    public int getItemStackLimit(@Nonnull ItemStack stack)
-    {
-        return 1;
-    }
-
     /**
      * Return whether this slot's stack can be taken from this slot.
      */
@@ -98,16 +92,18 @@ public class SlotExtension extends Slot
     public ItemStack decrStackSize(int amount)
     {
         ItemStack itemstack = slot.getContents();
+        if (itemstack == null)
+            return null;
 
-        int available = Math.min(itemstack.getCount(), amount);
-        int remaining = itemstack.getCount() - available;
+        int available = Math.min(itemstack.stackSize, amount);
+        int remaining = itemstack.stackSize - available;
 
         ItemStack split = itemstack.copy();
-        split.setCount(available);
-        itemstack.setCount(remaining);
+        split.stackSize = available;
+        itemstack.stackSize = remaining;
 
         if (remaining <= 0)
-            slot.setContents(ItemStack.EMPTY);
+            slot.setContents(null);
 
         this.onSlotChanged();
 
@@ -117,11 +113,5 @@ public class SlotExtension extends Slot
     public IExtensionSlot getExtensionSlot()
     {
         return slot;
-    }
-
-    @Override
-    public boolean isSameInventory(Slot other)
-    {
-        return other instanceof SlotExtension && ((SlotExtension) other).getExtensionSlot() == this.slot;
     }
 }

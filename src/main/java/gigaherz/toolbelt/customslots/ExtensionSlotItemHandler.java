@@ -2,7 +2,7 @@ package gigaherz.toolbelt.customslots;
 
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ResourceLocation;
-import net.minecraftforge.items.IItemHandlerModifiable;
+import gigaherz.toolbelt.itemhandler.IItemHandlerModifiable;
 
 import javax.annotation.Nonnull;
 
@@ -50,10 +50,10 @@ public class ExtensionSlotItemHandler implements IExtensionSlot
     {
         ItemStack oldStack = getContents();
         if (oldStack == stack) return;
-        if (!oldStack.isEmpty())
+        if (oldStack != null)
             notifyUnequip(oldStack);
         inventory.setStackInSlot(slot, stack);
-        if (!stack.isEmpty())
+        if (stack != null)
             notifyEquip(stack);
     }
 
@@ -65,7 +65,7 @@ public class ExtensionSlotItemHandler implements IExtensionSlot
 
     private void notifyEquip(ItemStack stack)
     {
-        IExtensionSlotItem extItem = stack.getCapability(CapabilityExtensionSlotItem.INSTANCE, null);
+        IExtensionSlotItem extItem = CapabilityExtensionSlotItem.get(stack);
         if (extItem == null)
             return;
         extItem.onEquipped(stack, this);
@@ -73,7 +73,7 @@ public class ExtensionSlotItemHandler implements IExtensionSlot
 
     private void notifyUnequip(ItemStack stack)
     {
-        IExtensionSlotItem extItem = stack.getCapability(CapabilityExtensionSlotItem.INSTANCE, null);
+        IExtensionSlotItem extItem = CapabilityExtensionSlotItem.get(stack);
         if (extItem == null)
             return;
         extItem.onUnequipped(stack, this);
@@ -82,9 +82,9 @@ public class ExtensionSlotItemHandler implements IExtensionSlot
     public void onWornTick()
     {
         ItemStack stack = getContents();
-        if (stack.isEmpty())
+        if (stack == null)
             return;
-        IExtensionSlotItem extItem = stack.getCapability(CapabilityExtensionSlotItem.INSTANCE, null);
+        IExtensionSlotItem extItem = CapabilityExtensionSlotItem.get(stack);
         if (extItem == null)
             return;
         extItem.onWornTick(stack, this);

@@ -1,13 +1,13 @@
 package gigaherz.toolbelt.common;
 
 import gigaherz.toolbelt.Config;
+import gigaherz.toolbelt.belt.ItemToolBelt;
+import gigaherz.toolbelt.belt.ToolBeltInventory;
+import gigaherz.toolbelt.itemhandler.IItemHandlerModifiable;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.text.ITextComponent;
-import net.minecraftforge.items.CapabilityItemHandler;
-import net.minecraftforge.items.IItemHandlerModifiable;
 
 import java.util.Optional;
 
@@ -23,6 +23,8 @@ public class SlotBelt extends Slot
 
             ItemStack beltStack = null;
             IItemHandlerModifiable inventory = null;
+            // Container code changes the returned stack in place and then calls markDirty
+            ItemStack lastStack = null;
 
             Optional<IItemHandlerModifiable> findStack()
             {
@@ -30,27 +32,22 @@ public class SlotBelt extends Slot
                 if (stack != beltStack)
                 {
                     beltStack = stack;
-                    inventory = (IItemHandlerModifiable)stack.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, null);
+                    inventory = stack != null && stack.getItem() instanceof ItemToolBelt ? new ToolBeltInventory(stack) : null;
+                    lastStack = null;
                 }
                 return Optional.ofNullable(inventory);
             }
 
             @Override
-            public String getName()
+            public String getInventoryName()
             {
                 return "toolbelt.slot.wrapper";
             }
 
             @Override
-            public boolean hasCustomName()
+            public boolean hasCustomInventoryName()
             {
                 return false;
-            }
-
-            @Override
-            public ITextComponent getDisplayName()
-            {
-                return null;
             }
 
             @Override
@@ -60,33 +57,31 @@ public class SlotBelt extends Slot
             }
 
             @Override
-            public boolean isEmpty()
-            {
-                return getStackInSlot(0).getCount() <= 0;
-            }
-
-            @Override
             public ItemStack getStackInSlot(int n)
             {
-                return findStack().map(inv -> inv.getStackInSlot(subSlot)).orElse(ItemStack.EMPTY);
+                lastStack = findStack().map(inv -> inv.getStackInSlot(subSlot)).orElse(null);
+                return lastStack;
             }
 
             @Override
             public ItemStack decrStackSize(int n, int count)
             {
-                return findStack().map(inv -> inv.extractItem(subSlot, count, false)).orElse(ItemStack.EMPTY);
+                ItemStack result = findStack().map(inv -> inv.extractItem(subSlot, count, false)).orElse(null);
+                getStackInSlot(n);
+                return result;
             }
 
             @Override
-            public ItemStack removeStackFromSlot(int n)
+            public ItemStack getStackInSlotOnClosing(int n)
             {
-                return ItemStack.EMPTY;
+                return null;
             }
 
             @Override
             public void setInventorySlotContents(int n, ItemStack stack)
             {
                 findStack().ifPresent(inv -> inv.setStackInSlot(subSlot, stack));
+                lastStack = stack;
             }
 
             @Override
@@ -98,23 +93,24 @@ public class SlotBelt extends Slot
             @Override
             public void markDirty()
             {
-
+                if (lastStack != null)
+                    findStack().ifPresent(inv -> inv.setStackInSlot(subSlot, lastStack.stackSize > 0 ? lastStack : null));
             }
 
             @Override
-            public boolean isUsableByPlayer(EntityPlayer player)
+            public boolean isUseableByPlayer(EntityPlayer player)
             {
                 return false;
             }
 
             @Override
-            public void openInventory(EntityPlayer player)
+            public void openInventory()
             {
 
             }
 
             @Override
-            public void closeInventory(EntityPlayer player)
+            public void closeInventory()
             {
 
             }
@@ -123,30 +119,6 @@ public class SlotBelt extends Slot
             public boolean isItemValidForSlot(int index, ItemStack stack)
             {
                 return Config.isItemStackAllowed(stack);
-            }
-
-            @Override
-            public int getField(int id)
-            {
-                return 0;
-            }
-
-            @Override
-            public void setField(int id, int value)
-            {
-
-            }
-
-            @Override
-            public int getFieldCount()
-            {
-                return 0;
-            }
-
-            @Override
-            public void clear()
-            {
-
             }
         }, blockedSlot, xPosition, yPosition);
     }

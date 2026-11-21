@@ -6,8 +6,8 @@ import gigaherz.toolbelt.ToolBelt;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.resources.I18n;
 import net.minecraftforge.common.config.ConfigElement;
-import net.minecraftforge.fml.client.config.GuiConfig;
-import net.minecraftforge.fml.client.config.IConfigElement;
+import cpw.mods.fml.client.config.GuiConfig;
+import cpw.mods.fml.client.config.IConfigElement;
 
 import java.util.List;
 
@@ -23,6 +23,7 @@ public class ConfigGui extends GuiConfig
         return I18n.format("text." + ToolBelt.MODID + ".name");
     }
 
+    @SuppressWarnings({"rawtypes", "unchecked"})
     private static List<IConfigElement> getConfigElements()
     {
         List<IConfigElement> configElements = Lists.newArrayList();

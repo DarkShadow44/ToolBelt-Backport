@@ -4,16 +4,14 @@ import gigaherz.toolbelt.BeltFinder;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraftforge.event.entity.player.PlayerEvent;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import cpw.mods.fml.common.eventhandler.SubscribeEvent;
 
-@Mod.EventBusSubscriber
 public class BeltEvents
 {
     @SubscribeEvent
-    public static void startTracking(PlayerEvent.StartTracking event)
+    public void startTracking(PlayerEvent.StartTracking event)
     {
-        Entity entity = event.getTarget();
+        Entity entity = event.target;
         if (!(entity instanceof EntityPlayer))
             return;
 

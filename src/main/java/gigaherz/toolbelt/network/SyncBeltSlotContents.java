@@ -6,15 +6,17 @@ import gigaherz.toolbelt.slot.ExtensionSlotBelt;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.NonNullList;
-import net.minecraftforge.fml.common.network.ByteBufUtils;
-import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
-import net.minecraftforge.fml.common.network.simpleimpl.IMessageHandler;
-import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
+import com.google.common.collect.Lists;
+import cpw.mods.fml.common.network.ByteBufUtils;
+import cpw.mods.fml.common.network.simpleimpl.IMessage;
+import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
+import cpw.mods.fml.common.network.simpleimpl.MessageContext;
+
+import java.util.List;
 
 public class SyncBeltSlotContents implements IMessage
 {
-    public final NonNullList<ItemStack> stacks = NonNullList.create();
+    public final List<ItemStack> stacks = Lists.newArrayList();
     public int entityId;
 
     public SyncBeltSlotContents()

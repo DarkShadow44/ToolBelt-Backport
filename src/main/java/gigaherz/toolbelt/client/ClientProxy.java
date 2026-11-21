@@ -4,31 +4,22 @@ import gigaherz.toolbelt.BeltFinder;
 import gigaherz.toolbelt.Config;
 import gigaherz.toolbelt.ISideProxy;
 import gigaherz.toolbelt.ToolBelt;
-import gigaherz.toolbelt.common.ContainerBeltSlot;
 import gigaherz.toolbelt.network.BeltContentsChange;
 import gigaherz.toolbelt.network.OpenBeltSlotInventory;
 import gigaherz.toolbelt.network.SyncBeltSlotContents;
 import gigaherz.toolbelt.slot.ExtensionSlotBelt;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.entity.RenderPlayer;
 import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
-import net.minecraftforge.client.event.ModelRegistryEvent;
-import net.minecraftforge.client.event.TextureStitchEvent;
-import net.minecraftforge.fml.client.registry.ClientRegistry;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
-import net.minecraftforge.fml.common.gameevent.InputEvent;
-import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.common.MinecraftForge;
+import cpw.mods.fml.client.registry.ClientRegistry;
+import cpw.mods.fml.common.FMLCommonHandler;
+import cpw.mods.fml.common.eventhandler.SubscribeEvent;
+import cpw.mods.fml.common.gameevent.InputEvent;
 import org.lwjgl.input.Keyboard;
 
-import java.util.Map;
-
-import static gigaherz.common.client.ModelHelpers.registerItemModel;
-
-@Mod.EventBusSubscriber(Side.CLIENT)
 public class ClientProxy implements ISideProxy
 {
     public static KeyBinding keyOpenToolMenu;
@@ -38,20 +29,7 @@ public class ClientProxy implements ISideProxy
     public static KeyBinding keyOpenBeltSlot;
 
     @SubscribeEvent
-    public static void registerModels(ModelRegistryEvent event)
-    {
-        registerItemModel(ToolBelt.belt);
-        registerItemModel(ToolBelt.pouch);
-    }
-
-    @SubscribeEvent
-    public static void textureStitch(TextureStitchEvent.Pre event)
-    {
-        event.getMap().registerSprite(ContainerBeltSlot.BACKGROUND_ICON);
-    }
-
-    @SubscribeEvent
-    public static void handleKeys(InputEvent ev) // Not a mistake, I want both kb & mouse events handled.
+    public void handleKeys(InputEvent ev) // Not a mistake, I want both kb & mouse events handled.
     {
         Minecraft mc = Minecraft.getMinecraft();
 
@@ -59,10 +37,10 @@ public class ClientProxy implements ISideProxy
         {
             if (mc.currentScreen == null)
             {
-                ItemStack inHand = mc.player.getHeldItemMainhand();
+                ItemStack inHand = mc.thePlayer.getCurrentEquippedItem();
                 if (Config.isItemStackAllowed(inHand))
                 {
-                    BeltFinder.BeltGetter getter = BeltFinder.findBelt(mc.player);
+                    BeltFinder.BeltGetter getter = BeltFinder.findBelt(mc.thePlayer);
                     if (getter == null)
                         return;
 
@@ -109,20 +87,18 @@ public class ClientProxy implements ISideProxy
                     new KeyBinding("key.toolbelt.slot", Keyboard.KEY_V, "key.toolbelt.category"));
         }
 
-        Map<String, RenderPlayer> skinMap = Minecraft.getMinecraft().getRenderManager().getSkinMap();
-
-        RenderPlayer render = skinMap.get("default");
-        render.addLayer(new LayerToolBelt(render));
-
-        render = skinMap.get("slim");
-        render.addLayer(new LayerToolBelt(render));
+        MinecraftForge.EVENT_BUS.register(new LayerToolBelt());
+        MinecraftForge.EVENT_BUS.register(new GuiRadialMenu.OverlayHandler());
+        FMLCommonHandler.instance().bus().register(this);
+        FMLCommonHandler.instance().bus().register(new Config());
     }
 
     @Override
     public void handleBeltContentsChange(final BeltContentsChange message)
     {
-        Minecraft.getMinecraft().addScheduledTask(() -> {
-            Entity entity = Minecraft.getMinecraft().world.getEntityByID(message.player);
+        // 1.7.10 handles packets on the main thread
+        {
+            Entity entity = Minecraft.getMinecraft().theWorld.getEntityByID(message.player);
             if (!(entity instanceof EntityPlayer))
                 return;
             EntityPlayer player = (EntityPlayer) entity;
@@ -138,18 +114,19 @@ public class ClientProxy implements ISideProxy
                     BeltFinder.instances.forEach((i) -> i.setToBaubles(player, message.slot, message.stack));
                     break;
             }
-        });
+        }
     }
 
     @Override
     public void handleBeltSlotContents(SyncBeltSlotContents message)
     {
-        Minecraft.getMinecraft().addScheduledTask(() -> {
-            Entity entity = Minecraft.getMinecraft().world.getEntityByID(message.entityId);
+        // 1.7.10 handles packets on the main thread
+        {
+            Entity entity = Minecraft.getMinecraft().theWorld.getEntityByID(message.entityId);
             if (entity instanceof EntityPlayer)
             {
                 ExtensionSlotBelt.get((EntityPlayer) entity).setAll(message.stacks);
             }
-        });
+        }
     }
 }

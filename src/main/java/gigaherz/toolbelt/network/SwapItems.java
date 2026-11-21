@@ -2,21 +2,16 @@ package gigaherz.toolbelt.network;
 
 import gigaherz.toolbelt.BeltFinder;
 import gigaherz.toolbelt.Config;
-import gigaherz.toolbelt.belt.ItemToolBelt;
 import gigaherz.toolbelt.belt.ToolBeltInventory;
+import gigaherz.toolbelt.itemhandler.IItemHandlerModifiable;
+import gigaherz.toolbelt.itemhandler.ItemHandlerHelper;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.EnumHand;
-import net.minecraft.world.WorldServer;
-import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
-import net.minecraftforge.fml.common.network.simpleimpl.IMessageHandler;
-import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
-import net.minecraftforge.items.CapabilityItemHandler;
-import net.minecraftforge.items.IItemHandler;
-import net.minecraftforge.items.IItemHandlerModifiable;
-import net.minecraftforge.items.ItemHandlerHelper;
+import cpw.mods.fml.common.network.simpleimpl.IMessage;
+import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
+import cpw.mods.fml.common.network.simpleimpl.MessageContext;
 
 public class SwapItems
         implements IMessage
@@ -49,10 +44,10 @@ public class SwapItems
         @Override
         public IMessage onMessage(final SwapItems message, MessageContext ctx)
         {
-            final EntityPlayerMP player = ctx.getServerHandler().player;
-            final WorldServer world = (WorldServer) player.world;
+            final EntityPlayerMP player = ctx.getServerHandler().playerEntity;
 
-            world.addScheduledTask(() -> swapItem(message.swapWith, player));
+            // 1.7.10 handles packets on the main thread
+            swapItem(message.swapWith, player);
 
             return null; // no response in this case
         }
@@ -65,23 +60,26 @@ public class SwapItems
             return;
 
         ItemStack stack = getter.getBelt();
-        if (stack.getCount() <= 0)
+        if (stack == null)
             return;
 
-        ItemStack inHand = player.getHeldItemMainhand();
+        ItemStack inHand = player.getCurrentEquippedItem();
 
         if (!Config.isItemStackAllowed(inHand))
             return;
 
-        IItemHandlerModifiable cap = (IItemHandlerModifiable)stack.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, null);
+        IItemHandlerModifiable cap = new ToolBeltInventory(stack);
+        if (swapWith >= cap.getSlots())
+            return;
+
         if (swapWith < 0)
         {
-            player.setHeldItem(EnumHand.MAIN_HAND, ItemHandlerHelper.insertItem(cap, inHand, false));
+            player.inventory.setInventorySlotContents(player.inventory.currentItem, ItemHandlerHelper.insertItem(cap, inHand, false));
         }
         else
         {
             ItemStack inSlot = cap.getStackInSlot(swapWith);
-            player.setHeldItem(EnumHand.MAIN_HAND, inSlot);
+            player.inventory.setInventorySlotContents(player.inventory.currentItem, inSlot);
             cap.setStackInSlot(swapWith, inHand);
         }
 
