@@ -5,8 +5,8 @@ import net.minecraft.item.ItemStack;
 /**
  * Minimal backport of Forge's IItemHandler. Empty stacks are null.
  */
-public interface IItemHandler
-{
+public interface IItemHandler {
+
     int getSlots();
 
     ItemStack getStackInSlot(int slot);

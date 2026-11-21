@@ -10,36 +10,27 @@ import net.minecraft.world.World;
 import net.minecraftforge.oredict.OreDictionary;
 
 /** Dyes the belt like leather armor, see RecipesArmorDyes. Accepts vanilla dyes and the dyeXxx ore names. */
-public class BeltDyeRecipe implements IRecipe
-{
+public class BeltDyeRecipe implements IRecipe {
+
     private static final String[] DYE_ORE_NAMES = { "dyeBlack", "dyeRed", "dyeGreen", "dyeBrown", "dyeBlue",
         "dyePurple", "dyeCyan", "dyeLightGray", "dyeGray", "dyePink", "dyeLime", "dyeYellow", "dyeLightBlue",
         "dyeMagenta", "dyeOrange", "dyeWhite" };
 
     @Override
-    public boolean matches(InventoryCrafting inv, World world)
-    {
+    public boolean matches(InventoryCrafting inv, World world) {
         ItemStack belt = null;
         boolean hasDye = false;
 
-        for (int i = 0; i < inv.getSizeInventory(); ++i)
-        {
+        for (int i = 0; i < inv.getSizeInventory(); ++i) {
             ItemStack stack = inv.getStackInSlot(i);
-            if (stack == null)
-                continue;
+            if (stack == null) continue;
 
-            if (stack.getItem() instanceof ItemToolBelt)
-            {
-                if (belt != null)
-                    return false;
+            if (stack.getItem() instanceof ItemToolBelt) {
+                if (belt != null) return false;
                 belt = stack;
-            }
-            else if (getDyeIndex(stack) >= 0)
-            {
+            } else if (getDyeIndex(stack) >= 0) {
                 hasDye = true;
-            }
-            else
-            {
+            } else {
                 return false;
             }
         }
@@ -48,29 +39,23 @@ public class BeltDyeRecipe implements IRecipe
     }
 
     @Override
-    public ItemStack getCraftingResult(InventoryCrafting inv)
-    {
+    public ItemStack getCraftingResult(InventoryCrafting inv) {
         ItemStack result = null;
         int[] rgb = new int[3];
         int maxSum = 0;
         int count = 0;
 
-        for (int i = 0; i < inv.getSizeInventory(); ++i)
-        {
+        for (int i = 0; i < inv.getSizeInventory(); ++i) {
             ItemStack stack = inv.getStackInSlot(i);
-            if (stack == null)
-                continue;
+            if (stack == null) continue;
 
-            if (stack.getItem() instanceof ItemToolBelt)
-            {
-                if (result != null)
-                    return null;
+            if (stack.getItem() instanceof ItemToolBelt) {
+                if (result != null) return null;
 
                 result = stack.copy();
                 result.stackSize = 1;
 
-                if (ItemToolBelt.hasColor(stack))
-                {
+                if (ItemToolBelt.hasColor(stack)) {
                     int color = ItemToolBelt.getColor(stack);
                     float r = (float) ((color >> 16) & 255) / 255.0F;
                     float g = (float) ((color >> 8) & 255) / 255.0F;
@@ -81,12 +66,9 @@ public class BeltDyeRecipe implements IRecipe
                     rgb[2] = (int) ((float) rgb[2] + b * 255.0F);
                     ++count;
                 }
-            }
-            else
-            {
+            } else {
                 int dye = getDyeIndex(stack);
-                if (dye < 0)
-                    return null;
+                if (dye < 0) return null;
 
                 float[] color = EntitySheep.fleeceColorTable[BlockColored.func_150032_b(dye)];
                 int r = (int) (color[0] * 255.0F);
@@ -117,32 +99,25 @@ public class BeltDyeRecipe implements IRecipe
     }
 
     /** @return the vanilla dye metadata for this stack, or -1 if it is not a dye */
-    private static int getDyeIndex(ItemStack stack)
-    {
-        if (stack.getItem() == Items.dye)
-            return stack.getItemDamage() & 15;
+    private static int getDyeIndex(ItemStack stack) {
+        if (stack.getItem() == Items.dye) return stack.getItemDamage() & 15;
 
-        for (int id : OreDictionary.getOreIDs(stack))
-        {
+        for (int id : OreDictionary.getOreIDs(stack)) {
             String name = OreDictionary.getOreName(id);
-            for (int i = 0; i < DYE_ORE_NAMES.length; i++)
-            {
-                if (DYE_ORE_NAMES[i].equals(name))
-                    return i;
+            for (int i = 0; i < DYE_ORE_NAMES.length; i++) {
+                if (DYE_ORE_NAMES[i].equals(name)) return i;
             }
         }
         return -1;
     }
 
     @Override
-    public int getRecipeSize()
-    {
+    public int getRecipeSize() {
         return 10;
     }
 
     @Override
-    public ItemStack getRecipeOutput()
-    {
+    public ItemStack getRecipeOutput() {
         return null;
     }
 }

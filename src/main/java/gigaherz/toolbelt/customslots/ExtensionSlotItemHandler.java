@@ -1,20 +1,21 @@
 package gigaherz.toolbelt.customslots;
 
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.ResourceLocation;
-import gigaherz.toolbelt.itemhandler.IItemHandlerModifiable;
-
 import javax.annotation.Nonnull;
 
-public class ExtensionSlotItemHandler implements IExtensionSlot
-{
+import net.minecraft.item.ItemStack;
+import net.minecraft.util.ResourceLocation;
+
+import gigaherz.toolbelt.itemhandler.IItemHandlerModifiable;
+
+public class ExtensionSlotItemHandler implements IExtensionSlot {
+
     protected final IExtensionContainer owner;
     protected final ResourceLocation slotType;
     protected final int slot;
     protected final IItemHandlerModifiable inventory;
 
-    public ExtensionSlotItemHandler(IExtensionContainer owner, ResourceLocation slotType, IItemHandlerModifiable inventory, int slot)
-    {
+    public ExtensionSlotItemHandler(IExtensionContainer owner, ResourceLocation slotType,
+        IItemHandlerModifiable inventory, int slot) {
         this.owner = owner;
         this.slotType = slotType;
         this.slot = slot;
@@ -23,15 +24,13 @@ public class ExtensionSlotItemHandler implements IExtensionSlot
 
     @Nonnull
     @Override
-    public IExtensionContainer getContainer()
-    {
+    public IExtensionContainer getContainer() {
         return owner;
     }
 
     @Nonnull
     @Override
-    public ResourceLocation getType()
-    {
+    public ResourceLocation getType() {
         return slotType;
     }
 
@@ -40,53 +39,41 @@ public class ExtensionSlotItemHandler implements IExtensionSlot
      */
     @Nonnull
     @Override
-    public ItemStack getContents()
-    {
+    public ItemStack getContents() {
         return inventory.getStackInSlot(slot);
     }
 
     @Override
-    public void setContents(@Nonnull ItemStack stack)
-    {
+    public void setContents(@Nonnull ItemStack stack) {
         ItemStack oldStack = getContents();
         if (oldStack == stack) return;
-        if (oldStack != null)
-            notifyUnequip(oldStack);
+        if (oldStack != null) notifyUnequip(oldStack);
         inventory.setStackInSlot(slot, stack);
-        if (stack != null)
-            notifyEquip(stack);
+        if (stack != null) notifyEquip(stack);
     }
 
     @Override
-    public void onContentsChanged()
-    {
+    public void onContentsChanged() {
         owner.onContentsChanged(this);
     }
 
-    private void notifyEquip(ItemStack stack)
-    {
+    private void notifyEquip(ItemStack stack) {
         IExtensionSlotItem extItem = CapabilityExtensionSlotItem.get(stack);
-        if (extItem == null)
-            return;
+        if (extItem == null) return;
         extItem.onEquipped(stack, this);
     }
 
-    private void notifyUnequip(ItemStack stack)
-    {
+    private void notifyUnequip(ItemStack stack) {
         IExtensionSlotItem extItem = CapabilityExtensionSlotItem.get(stack);
-        if (extItem == null)
-            return;
+        if (extItem == null) return;
         extItem.onUnequipped(stack, this);
     }
 
-    public void onWornTick()
-    {
+    public void onWornTick() {
         ItemStack stack = getContents();
-        if (stack == null)
-            return;
+        if (stack == null) return;
         IExtensionSlotItem extItem = CapabilityExtensionSlotItem.get(stack);
-        if (extItem == null)
-            return;
+        if (extItem == null) return;
         extItem.onWornTick(stack, this);
     }
 }

@@ -1,17 +1,18 @@
 package gigaherz.toolbelt.customslots;
 
-import com.google.common.collect.ImmutableSet;
+import javax.annotation.Nonnull;
+
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ResourceLocation;
 
-import javax.annotation.Nonnull;
+import com.google.common.collect.ImmutableSet;
 
 /**
  * Implemented by items that want to be accepted in special equipment slots, and optionally to provide
  * custom processing for insertion, ticking, etc.
  */
-public interface IExtensionSlotItem
-{
+public interface IExtensionSlotItem {
+
     /**
      * Returns the list of slot IDs for extension containers. "forge:any" should be accepted by all extension containers
      * and is the default return type. Should be used by extension containers to test for equipability, and to display
@@ -23,8 +24,7 @@ public interface IExtensionSlotItem
      * @return An immutable list with the ResourceLocations of the slots.
      */
     @Nonnull
-    default ImmutableSet<ResourceLocation> getAcceptableSlots(@Nonnull ItemStack stack)
-    {
+    default ImmutableSet<ResourceLocation> getAcceptableSlots(@Nonnull ItemStack stack) {
         return CapabilityExtensionSlotItem.ANY_SLOT_LIST;
     }
 
@@ -34,9 +34,7 @@ public interface IExtensionSlotItem
      * @param stack The ItemStack in the slot.
      * @param slot  The slot being referenced.
      */
-    default void onWornTick(@Nonnull ItemStack stack, @Nonnull IExtensionSlot slot)
-    {
-    }
+    default void onWornTick(@Nonnull ItemStack stack, @Nonnull IExtensionSlot slot) {}
 
     /**
      * Called when the item is equipped to an extension slot.
@@ -44,9 +42,7 @@ public interface IExtensionSlotItem
      * @param stack The ItemStack in the slot.
      * @param slot  The slot being referenced.
      */
-    default void onEquipped(@Nonnull ItemStack stack, @Nonnull IExtensionSlot slot)
-    {
-    }
+    default void onEquipped(@Nonnull ItemStack stack, @Nonnull IExtensionSlot slot) {}
 
     /**
      * Called when the item is removed from an extension slot.
@@ -54,9 +50,7 @@ public interface IExtensionSlotItem
      * @param stack The ItemStack in the slot.
      * @param slot  The slot being referenced.
      */
-    default void onUnequipped(@Nonnull ItemStack stack, @Nonnull IExtensionSlot slot)
-    {
-    }
+    default void onUnequipped(@Nonnull ItemStack stack, @Nonnull IExtensionSlot slot) {}
 
     /**
      * Queries wether or not the stack can be placed in the slot.
@@ -64,8 +58,7 @@ public interface IExtensionSlotItem
      * @param stack The ItemStack in the slot.
      * @param slot  The slot being referenced.
      */
-    default boolean canEquip(@Nonnull ItemStack stack, @Nonnull IExtensionSlot slot)
-    {
+    default boolean canEquip(@Nonnull ItemStack stack, @Nonnull IExtensionSlot slot) {
         return true;
     }
 
@@ -75,8 +68,7 @@ public interface IExtensionSlotItem
      * @param stack The ItemStack in the slot.
      * @param slot  The slot being referenced.
      */
-    default boolean canUnequip(@Nonnull ItemStack stack, @Nonnull IExtensionSlot slot)
-    {
+    default boolean canUnequip(@Nonnull ItemStack stack, @Nonnull IExtensionSlot slot) {
         return true;
     }
 }

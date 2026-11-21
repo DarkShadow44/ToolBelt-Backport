@@ -1,18 +1,5 @@
 package gigaherz.toolbelt;
 
-import com.google.common.base.Strings;
-import com.google.common.collect.Sets;
-import gigaherz.toolbelt.belt.ItemToolBelt;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraftforge.common.config.ConfigCategory;
-import net.minecraftforge.common.config.Configuration;
-import net.minecraftforge.common.config.Property;
-import cpw.mods.fml.client.event.ConfigChangedEvent;
-import cpw.mods.fml.common.Loader;
-import cpw.mods.fml.common.eventhandler.SubscribeEvent;
-import net.minecraftforge.oredict.OreDictionary;
-
 import java.io.File;
 import java.util.Arrays;
 import java.util.Set;
@@ -20,8 +7,23 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-public class Config
-{
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
+import net.minecraftforge.common.config.ConfigCategory;
+import net.minecraftforge.common.config.Configuration;
+import net.minecraftforge.common.config.Property;
+import net.minecraftforge.oredict.OreDictionary;
+
+import com.google.common.base.Strings;
+import com.google.common.collect.Sets;
+
+import cpw.mods.fml.client.event.ConfigChangedEvent;
+import cpw.mods.fml.common.Loader;
+import cpw.mods.fml.common.eventhandler.SubscribeEvent;
+import gigaherz.toolbelt.belt.ItemToolBelt;
+
+public class Config {
+
     private static Configuration config;
     public static ConfigCategory display;
     public static ConfigCategory input;
@@ -47,8 +49,7 @@ public class Config
     public static CustomBeltSlotMode customBeltSlotMode = CustomBeltSlotMode.ON;
     public static boolean customBeltSlotEnabled = true;
 
-    static void loadConfig(File configurationFile)
-    {
+    static void loadConfig(File configurationFile) {
         config = new Configuration(configurationFile);
 
         Property bl = config.get("items", "blacklist", new String[0]);
@@ -84,7 +85,8 @@ public class Config
         Property disableAnvilUpgradingProperty = config.get("behaviour", "disableAnvilUpgrading", false);
         disableAnvilUpgradingProperty.comment = "If set to TRUE, the internal anvil upgrade will not work, and alternative methods for upgrades will have to be provided externally.";
 
-        Property customBeltSlotModeProperty = config.get("slot", "customBeltSlotMode", CustomBeltSlotMode.ON.getName(), null, CustomBeltSlotMode.names());
+        Property customBeltSlotModeProperty = config
+            .get("slot", "customBeltSlotMode", CustomBeltSlotMode.ON.getName(), null, CustomBeltSlotMode.names());
         customBeltSlotModeProperty.requiresMcRestart();
         customBeltSlotModeProperty.comment = "If AUTO, the belt slot will be disabled if Baubles is present. If OFF, the belt slot will be disabled permanently.";
 
@@ -112,71 +114,76 @@ public class Config
 
         customBeltSlotMode = CustomBeltSlotMode.byName(customBeltSlotModeProperty.getString());
 
-        customBeltSlotEnabled = customBeltSlotMode == CustomBeltSlotMode.ON ||
-                (customBeltSlotMode == CustomBeltSlotMode.AUTO && !Loader.isModLoaded("Baubles"));
+        customBeltSlotEnabled = customBeltSlotMode == CustomBeltSlotMode.ON
+            || (customBeltSlotMode == CustomBeltSlotMode.AUTO && !Loader.isModLoaded("Baubles"));
 
         blackListString.addAll(Arrays.asList(bl.getStringList()));
         whiteListString.addAll(Arrays.asList(wl.getStringList()));
-        if (!bl.wasRead() ||
-                !wl.wasRead() ||
-                !allowAllNonStackableItemsProperty.wasRead() ||
-                !releaseToSwapProperty.wasRead() ||
-                !showBeltOnPlayersProperty.wasRead() ||
-                !beltItemScaleProperty.wasRead() ||
-                !clipMouseToCircleProperty.wasRead() ||
-                !allowClickOutsideBoundsProperty.wasRead() ||
-                !displayEmptySlotsProperty.wasRead() ||
-                !minecraftHasNoCirclesProperty.wasRead() ||
-                disableAnvilUpgradingProperty.wasRead())
-        {
+        if (!bl.wasRead() || !wl.wasRead()
+            || !allowAllNonStackableItemsProperty.wasRead()
+            || !releaseToSwapProperty.wasRead()
+            || !showBeltOnPlayersProperty.wasRead()
+            || !beltItemScaleProperty.wasRead()
+            || !clipMouseToCircleProperty.wasRead()
+            || !allowClickOutsideBoundsProperty.wasRead()
+            || !displayEmptySlotsProperty.wasRead()
+            || !minecraftHasNoCirclesProperty.wasRead()
+            || disableAnvilUpgradingProperty.wasRead()) {
             config.save();
         }
     }
 
-    public static void postInit()
-    {
-        blackList.addAll(blackListString.stream().map(Config::parseItemStack).collect(Collectors.toList()));
-        whiteList.addAll(whiteListString.stream().map(Config::parseItemStack).collect(Collectors.toList()));
+    public static void postInit() {
+        blackList.addAll(
+            blackListString.stream()
+                .map(Config::parseItemStack)
+                .collect(Collectors.toList()));
+        whiteList.addAll(
+            whiteListString.stream()
+                .map(Config::parseItemStack)
+                .collect(Collectors.toList()));
     }
 
-    public static void refresh()
-    {
-        showBeltOnPlayers = display.get("showBeltOnPlayers").getBoolean();
-        beltItemScale = (float) display.get("beltItemScale").getDouble();
-        releaseToSwap = input.get("releaseToSwap").getBoolean();
-        clipMouseToCircle = input.get("clipMouseToCircle").getBoolean();
-        allowClickOutsideBounds = input.get("allowClickOutsideBounds").getBoolean();
-        displayEmptySlots = input.get("displayEmptySlots").getBoolean();
-        minecraftHasNoCircles = input.get("minecraftHasNoCircles").getBoolean();
-        disableAnvilUpgrading = behaviour.get("disableAnvilUpgrading").getBoolean();
+    public static void refresh() {
+        showBeltOnPlayers = display.get("showBeltOnPlayers")
+            .getBoolean();
+        beltItemScale = (float) display.get("beltItemScale")
+            .getDouble();
+        releaseToSwap = input.get("releaseToSwap")
+            .getBoolean();
+        clipMouseToCircle = input.get("clipMouseToCircle")
+            .getBoolean();
+        allowClickOutsideBounds = input.get("allowClickOutsideBounds")
+            .getBoolean();
+        displayEmptySlots = input.get("displayEmptySlots")
+            .getBoolean();
+        minecraftHasNoCircles = input.get("minecraftHasNoCircles")
+            .getBoolean();
+        disableAnvilUpgrading = behaviour.get("disableAnvilUpgrading")
+            .getBoolean();
     }
 
     @SubscribeEvent
-    public void onConfigChange(ConfigChangedEvent.OnConfigChangedEvent event)
-    {
-        if (ToolBelt.MODID.equals(event.modID))
-        {
-            if (config.hasChanged())
-                config.save();
+    public void onConfigChange(ConfigChangedEvent.OnConfigChangedEvent event) {
+        if (ToolBelt.MODID.equals(event.modID)) {
+            if (config.hasChanged()) config.save();
             refresh();
         }
     }
 
-    private static final Pattern itemRegex = Pattern.compile("^(?<item>([a-zA-Z-0-9_]+:)?[a-zA-Z-0-9_]+)(?:@((?<meta>[0-9]+)|(?<any>any)))?$");
+    private static final Pattern itemRegex = Pattern
+        .compile("^(?<item>([a-zA-Z-0-9_]+:)?[a-zA-Z-0-9_]+)(?:@((?<meta>[0-9]+)|(?<any>any)))?$");
 
-    private static ItemStack parseItemStack(String itemString)
-    {
+    private static ItemStack parseItemStack(String itemString) {
         Matcher matcher = itemRegex.matcher(itemString);
 
-        if (!matcher.matches())
-        {
+        if (!matcher.matches()) {
             ToolBelt.logger.warn("Could not parse item " + itemString);
             return null;
         }
 
         Item item = (Item) Item.itemRegistry.getObject(matcher.group("item"));
-        if (item == null)
-        {
+        if (item == null) {
             ToolBelt.logger.warn("Could not parse item " + itemString);
             return null;
         }
@@ -184,63 +191,55 @@ public class Config
         String anyString = matcher.group("any");
         String metaString = matcher.group("meta");
         int meta = Strings.isNullOrEmpty(anyString)
-                ? (Strings.isNullOrEmpty(metaString) ? 0 : Integer.parseInt(metaString))
-                : OreDictionary.WILDCARD_VALUE;
+            ? (Strings.isNullOrEmpty(metaString) ? 0 : Integer.parseInt(metaString))
+            : OreDictionary.WILDCARD_VALUE;
 
         return new ItemStack(item, 1, meta);
     }
 
-    public static boolean isItemStackAllowed(final ItemStack stack)
-    {
-        if (stack == null || stack.stackSize <= 0)
-            return true;
+    public static boolean isItemStackAllowed(final ItemStack stack) {
+        if (stack == null || stack.stackSize <= 0) return true;
 
-        if (whiteList.stream().anyMatch((s) -> OreDictionary.itemMatches(s, stack, false)))
-            return true;
+        if (whiteList.stream()
+            .anyMatch((s) -> OreDictionary.itemMatches(s, stack, false))) return true;
 
-        if (blackList.stream().anyMatch((s) -> OreDictionary.itemMatches(s, stack, false)))
-            return false;
+        if (blackList.stream()
+            .anyMatch((s) -> OreDictionary.itemMatches(s, stack, false))) return false;
 
-        if (stack.getItem() instanceof ItemToolBelt)
-            return false;
+        if (stack.getItem() instanceof ItemToolBelt) return false;
 
-        if (stack.getMaxStackSize() != 1)
-            return false;
+        if (stack.getMaxStackSize() != 1) return false;
 
         return allowAllNonStackableItems;
     }
 
-    public enum CustomBeltSlotMode
-    {
+    public enum CustomBeltSlotMode {
+
         OFF("off"),
         AUTO("auto"),
         ON("on");
 
         private final String name;
 
-        CustomBeltSlotMode(String name)
-        {
+        CustomBeltSlotMode(String name) {
             this.name = name;
         }
 
-        public String getName()
-        {
+        public String getName() {
             return name;
         }
 
-        public static CustomBeltSlotMode byName(String name)
-        {
-            for(CustomBeltSlotMode mode : values())
-            {
-                if (mode.name.equalsIgnoreCase(name))
-                    return mode;
+        public static CustomBeltSlotMode byName(String name) {
+            for (CustomBeltSlotMode mode : values()) {
+                if (mode.name.equalsIgnoreCase(name)) return mode;
             }
             return CustomBeltSlotMode.ON;
         }
 
-        public static String[] names()
-        {
-            return Arrays.stream(values()).map(CustomBeltSlotMode::getName).toArray(String[]::new);
+        public static String[] names() {
+            return Arrays.stream(values())
+                .map(CustomBeltSlotMode::getName)
+                .toArray(String[]::new);
         }
     }
 }

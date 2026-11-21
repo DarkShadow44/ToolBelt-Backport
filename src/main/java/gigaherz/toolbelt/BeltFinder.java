@@ -1,58 +1,45 @@
 package gigaherz.toolbelt;
 
-import com.google.common.collect.Lists;
-import gigaherz.toolbelt.belt.ItemToolBelt;
-import gigaherz.toolbelt.network.BeltContentsChange;
-import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraft.inventory.IInventory;
-import net.minecraft.item.ItemStack;
-import net.minecraft.world.WorldServer;
-
-import javax.annotation.Nullable;
 import java.util.List;
 
-import static gigaherz.toolbelt.network.BeltContentsChange.ContainingInventory.MAIN;
+import javax.annotation.Nullable;
 
-public abstract class BeltFinder
-{
+import net.minecraft.entity.EntityLivingBase;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.item.ItemStack;
+
+import com.google.common.collect.Lists;
+
+public abstract class BeltFinder {
+
     public static List<BeltFinder> instances = Lists.newArrayList();
 
     @Nullable
     public abstract BeltGetter findStack(EntityPlayer player);
 
     @Nullable
-    public static BeltGetter findBelt(EntityPlayer player)
-    {
-        for(int i=instances.size()-1;i>=0;i--)
-        {
+    public static BeltGetter findBelt(EntityPlayer player) {
+        for (int i = instances.size() - 1; i >= 0; i--) {
             BeltFinder instance = instances.get(i);
             BeltGetter getter = instance.findStack(player);
-            if (getter != null)
-                return getter;
+            if (getter != null) return getter;
         }
         return null;
     }
 
-    public static void sendSync(EntityPlayer player)
-    {
+    public static void sendSync(EntityPlayer player) {
         BeltFinder.BeltGetter stack = findBelt(player);
-        if (stack != null)
-        {
+        if (stack != null) {
             stack.syncToClients();
         }
     }
 
-    public void setToBaubles(EntityPlayer player, int slot, ItemStack stack)
-    {
-    }
-    public void setToBeltSlot(EntityLivingBase player, ItemStack stack)
-    {
-    }
+    public void setToBaubles(EntityPlayer player, int slot, ItemStack stack) {}
 
-    public interface BeltGetter
-    {
+    public void setToBeltSlot(EntityLivingBase player, ItemStack stack) {}
+
+    public interface BeltGetter {
+
         ItemStack getBelt();
 
         void syncToClients();

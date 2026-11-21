@@ -1,36 +1,29 @@
 package gigaherz.toolbelt.network;
 
-import gigaherz.toolbelt.ToolBelt;
-import gigaherz.toolbelt.common.GuiHandler;
-import io.netty.buffer.ByteBuf;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.world.WorldServer;
+
 import cpw.mods.fml.common.network.simpleimpl.IMessage;
 import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
 import cpw.mods.fml.common.network.simpleimpl.MessageContext;
+import gigaherz.toolbelt.ToolBelt;
+import gigaherz.toolbelt.common.GuiHandler;
+import io.netty.buffer.ByteBuf;
 
-public class OpenBeltSlotInventory
-        implements IMessage
-{
-    public OpenBeltSlotInventory()
-    {
-    }
+public class OpenBeltSlotInventory implements IMessage {
 
-    @Override
-    public void fromBytes(ByteBuf buf)
-    {
-    }
+    public OpenBeltSlotInventory() {}
 
     @Override
-    public void toBytes(ByteBuf buf)
-    {
-    }
+    public void fromBytes(ByteBuf buf) {}
 
-    public static class Handler implements IMessageHandler<OpenBeltSlotInventory, IMessage>
-    {
+    @Override
+    public void toBytes(ByteBuf buf) {}
+
+    public static class Handler implements IMessageHandler<OpenBeltSlotInventory, IMessage> {
+
         @Override
-        public IMessage onMessage(final OpenBeltSlotInventory message, MessageContext ctx)
-        {
+        public IMessage onMessage(final OpenBeltSlotInventory message, MessageContext ctx) {
             final EntityPlayerMP player = ctx.getServerHandler().playerEntity;
             final WorldServer world = (WorldServer) player.worldObj;
 

@@ -1,13 +1,14 @@
 package gigaherz.toolbelt.customslots;
 
-import com.google.common.collect.ImmutableSet;
+import javax.annotation.Nonnull;
+
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ResourceLocation;
 
-import javax.annotation.Nonnull;
+import com.google.common.collect.ImmutableSet;
 
-public interface IExtensionSlot
-{
+public interface IExtensionSlot {
+
     // Context
     @Nonnull
     IExtensionContainer getContainer();
@@ -30,12 +31,10 @@ public interface IExtensionSlot
      *
      * @param stack The ItemStack in the slot.
      */
-    default boolean canEquip(@Nonnull ItemStack stack)
-    {
+    default boolean canEquip(@Nonnull ItemStack stack) {
         IExtensionSlotItem extItem = CapabilityExtensionSlotItem.get(stack);
-        return extItem != null
-                && IExtensionSlot.isAcceptableSlot(this, stack, extItem)
-                && extItem.canEquip(stack, this);
+        return extItem != null && IExtensionSlot.isAcceptableSlot(this, stack, extItem)
+            && extItem.canEquip(stack, this);
     }
 
     /**
@@ -43,14 +42,13 @@ public interface IExtensionSlot
      *
      * @param stack The ItemStack in the slot.
      */
-    default boolean canUnequip(@Nonnull ItemStack stack)
-    {
+    default boolean canUnequip(@Nonnull ItemStack stack) {
         IExtensionSlotItem extItem = CapabilityExtensionSlotItem.get(stack);
         return (extItem == null || extItem.canUnequip(stack, this));
     }
 
-    static boolean isAcceptableSlot(@Nonnull IExtensionSlot slot, @Nonnull ItemStack stack, @Nonnull IExtensionSlotItem extItem)
-    {
+    static boolean isAcceptableSlot(@Nonnull IExtensionSlot slot, @Nonnull ItemStack stack,
+        @Nonnull IExtensionSlotItem extItem) {
         ImmutableSet<ResourceLocation> slots = extItem.getAcceptableSlots(stack);
         return slots.contains(CapabilityExtensionSlotItem.ANY_SLOT) || slots.contains(slot.getType());
     }
